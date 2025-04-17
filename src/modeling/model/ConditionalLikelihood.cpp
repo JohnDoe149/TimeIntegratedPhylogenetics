@@ -1,0 +1,48 @@
+#include "ConditionalLikelihood.hpp"
+#include "core/Alignment.hpp"
+#include "core/Msg.hpp"
+
+ConditionalLikelihood::ConditionalLikelihood(Alignment* aln, int nN, int nR) : numNodes(nN), numRates(nR), stateSpace(4) {
+    numChar = aln->getNumChar();
+    int width = numNodes*numChar*stateSpace*numRates;
+    condLikelihoods[0] = new double[2 * width];
+    condLikelihoods[1] = condLikelihoods[0] + (width);
+
+    for(int i = 0; i < width; i++){
+        condLikelihoods[0][i] = 0.0;
+        condLikelihoods[1][i] = 0.0;
+    }
+
+    for(int index = 0; index < aln->getNumTaxa(); index++){
+        for(int r = 0; r < numRates; r++){
+            double* p = (*this)(index, 0, r);
+            for(int i = 0; i < numChar; i++){
+                unsigned long long int state = aln->getMatrix()[index][i];
+
+                unsigned long long int mask = 1;
+                bool assigned = false;
+                for(int j = 0; j < stateSpace; j++) {
+                    if((mask & state) != 0){
+                        *p = 1.0;
+                        assigned = true;
+                    }
+                    mask <<= 1;
+                    p++;
+                }
+
+                if(assigned == false){
+                    Msg::error("Never assigned a conditional value at (" + std::to_string(index) + ", " + std::to_string(i) + ")! This has state value " + std::to_string(state));
+                }
+            }
+        }
+    }
+}
+
+ConditionalLikelihood::~ConditionalLikelihood(){
+    delete [] condLikelihoods[0];
+}
+
+
+double* ConditionalLikelihood::operator()(int n, int s, int r){
+    return condLikelihoods[s] + n*numChar*stateSpace + (r*numNodes*numChar*stateSpace);
+}

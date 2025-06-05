@@ -8,7 +8,8 @@
 
 RateMatrix::RateMatrix(Settings settings) : 
                                    currentQMatrix(4, 4, 0.0), oldQMatrix(4, 4, 0.0), 
-                                   currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50) {
+                                   currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50), rateStepsize(0.3), 
+                                   rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0){
 
     RandomVariable& rng = RandomVariable::randomVariableInstance();
 
@@ -19,11 +20,12 @@ RateMatrix::RateMatrix(Settings settings) :
         }
     }
 
+    // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
     std::vector<double> alpha;
     for(int i = 0; i < 4; i++)
         alpha.push_back(1.0);
-    
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
+
     oldStationary = currentStationary;
     
     oldQMatrix = currentQMatrix.copy();
@@ -33,27 +35,69 @@ RateMatrix::RateMatrix(Settings settings) :
 
 void RateMatrix::accept() {
     oldQMatrix = currentQMatrix.copy();
-
     oldStationary = currentStationary;
+    if(rateOrStationary == 2){
+        rateAcceptCount++;
+    }
+    else if (rateOrStationary == 1){
+        stationaryAcceptCount++;
+    }
 }
 
 void RateMatrix::reject() {
     currentQMatrix = oldQMatrix.copy();
-
     currentStationary = oldStationary;
+    rateOrStationary = 0;
 }
 
 double RateMatrix::lnPrior() {
     return 0;
 }
 
+// make an update to the rates
 double RateMatrix::updateRates(){
-    //...
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
+    rateCount++;
+    dirty();
+    rateOrStationary = 2; // set this to 2 to indicate that the choice has been made to update rate
+
+    std::vector<double> alpha;
+    // this vector will store all of our rates, takes the upper right values left to right row major order
+    for(int i = 0; i<=3; i++){
+        for(int j = i+1; j<=3; j++){
+            alpha.push_back(currentQMatrix(i,j));
+        }
+    }
+
+    double log_hastings = 0;
+    // make some proposals for the new rates
+    // we need to propose individual rates as the rates are not correlated
+    for(int i = 0; i<alpha.size(); i++){
+        // scaling factor (stepsize)
+        double scale = std::exp(rateStepsize * (rng.uniformRv() - 0.5));
+        alpha[i] = alpha[i] * scale;
+        log_hastings += std::log(scale);
+    }
+    
+    // now slide the new vectors back into the new matrix
+    int indexer = 0;
+    for(int i = 0; i<=3; i++){
+        for(int j = i+1; j<=3; j++){
+           double newRate = alpha[indexer];
+           currentQMatrix(i, j) = newRate;
+           currentQMatrix(j, i) = newRate;
+           indexer++;
+        }
+    }
+    currentQMatrix = Q();
+    return log_hastings;
 }
 
 double RateMatrix::updateStationary(){
     RandomVariable& rng = RandomVariable::randomVariableInstance();
     dirty();
+    stationaryCount++;
+    rateOrStationary = 1; // set this to 1 to indicate that stationaries are being updated
 
     std::vector<double> z(currentStationary.size(), 0.0);
     std::vector<double> alphaForward(currentStationary.size(), 0.0);
@@ -99,4 +143,26 @@ Matrix<double> RateMatrix::Q() {
     return returnMatrix;
 }
 
-void RateMatrix::tune(){}
+void RateMatrix::tune(){
+    double transitionRateRate = (double) rateAcceptCount/rateCount;
+    if(transitionRateRate > 0.33){
+        rateStepsize *= (1.0 + ((transitionRateRate-0.33)/0.67));
+    }
+    else {
+        rateStepsize /= (2.0 - transitionRateRate/0.33);
+    }
+    rateAcceptCount = 0;
+    rateCount = 0;
+
+    // we need to modify the stationaryAlpha
+    double stationaryRate = (double) stationaryAcceptCount/stationaryCount;
+    // if our acceptance rate is too high, that means we are exploring too much, so dial it back a little bit
+    if(stationaryRate > 0.33){
+        stationaryAlpha /= (1.0 + ((stationaryRate-0.33)/0.67));
+    }
+    else {
+        stationaryAlpha *= (2.0 + ((stationaryRate-0.33)));
+    }
+    stationaryAcceptCount = 0;
+    stationaryCount = 0;
+}

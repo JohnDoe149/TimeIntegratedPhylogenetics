@@ -28,6 +28,11 @@ class RandomVariable {
                                     static RandomVariable singleRandomVariable; // singleRandomVariable is initialized once
                                     return singleRandomVariable;
                                     }
+        static RandomVariable&  randomVariableInstance(uint32_t seed) // Returns reference to RandomVariable object
+                                    {
+                                    static RandomVariable singleRandomVariable(seed); // singleRandomVariable is initialized once
+                                    return singleRandomVariable;
+                                    }
         double                  uniformRv(void);
 
     private:

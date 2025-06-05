@@ -19,11 +19,21 @@ class RateMatrix : public Parameter {
         double updateRates();
         double updateStationary();
         std::vector<double> getStationary() {return currentStationary;}
+        Matrix<double> getRate() {return currentQMatrix;}
+        std::vector<std::string> transNameOrder(){return {"AC", "AG", "AT", "CG", "CT", "GT"};}
+        int rateAcceptCount;
+        int rateCount;
+        int stationaryAcceptCount;
+        int stationaryCount;
+        // if 1, rate was selected, if 2, stationary was selected
+        int rateOrStationary = 0;
     private:
         Matrix<double> currentQMatrix;
         Matrix<double> oldQMatrix;
 
         double stationaryAlpha;
+        double rateStepsize;
+        double stationaryStepsize;
 
         std::vector<double> currentStationary;
         std::vector<double> oldStationary;

@@ -16,11 +16,11 @@ Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mc
     }
 
     settings.push_back("-nexus");
-    settings.push_back("/workspaces/RobustPhylo/res/replicase.nex");
+    settings.push_back("/workspaces/JohnPhylo/res/replicase.nex");
     settings.push_back("-treeOut");
-    settings.push_back("/workspaces/RobustPhylo/res/trees.trees");
+    settings.push_back("/workspaces/JohnPhylo/res/trees.trees");
     settings.push_back("-mcmcOut");
-    settings.push_back("/workspaces/RobustPhylo/res/analysis.log");
+    settings.push_back("/workspaces/JohnPhylo/res/analysis.log");
 
     if (settings.size() == 0) {
         usage();

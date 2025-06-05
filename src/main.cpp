@@ -12,7 +12,9 @@
 #include "modeling/parameters/trees/Node.hpp"
 #include <algorithm>
 #include <chrono>
+#include "test.h"
 
+#ifndef TEST
 int main(int argc, char* argv[]) {
 
     Settings settings(argc, argv);
@@ -38,3 +40,20 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << "Analysis was completed in " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << "[m]" << std::endl;
 }
+#endif
+
+#ifdef TEST
+int main(int argc, char* argv[]) {
+    Settings settings(argc, argv);
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    Alignment aln(settings.nexusInput);
+    TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
+    std::cout << treeParam.writeNewick() << std::endl;
+    treeParam.update();
+    std::cout << treeParam.writeNewick() << std::endl;
+    std::cout << "new line";
+    // std::cout << treeParam.writeNewick() << std::endl;
+
+
+}
+#endif

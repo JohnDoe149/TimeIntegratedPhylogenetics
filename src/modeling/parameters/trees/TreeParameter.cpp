@@ -5,6 +5,7 @@
 #include "core/Alignment.hpp"
 #include "Node.hpp"
 #include <cmath>
+#include <test.h>
 
 TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
                                                          branchDelta(1), moveChoice(-1), branchCount(0), branchAcceptCount(0), 
@@ -17,7 +18,12 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
 
     // if not a fixed tree, meaning the topology
     if(!fixedTree){
+        #ifdef TEST
+        RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+        #endif
+        #ifndef TEST
         RandomVariable& rng = RandomVariable::randomVariableInstance();
+        #endif
         std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
         // given that its postorder traversal, root_node will always be last
         for(Node* n : nodes) {
@@ -72,7 +78,12 @@ void TreeParameter::reject(){
 
 
 double TreeParameter::update() {
+    #ifdef TEST
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    #endif
+    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
+    #endif
     double randomMove = rng.uniformRv();
 
     double hastings = 0.0;
@@ -87,6 +98,7 @@ double TreeParameter::update() {
             // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
             // out an internal subtree with a subtree that diverged earlier
             if(1){
+                int a = 1+1;
                 moveChoice = 2; //2 represents NNI cause I said so
                 branchCount += 0;
                 TreeObject* tree = trees[0];
@@ -125,7 +137,7 @@ double TreeParameter::update() {
                         if(s1 == nullptr){
                             s1 = tempnode;
                         } 
-                        else if(s2 == nullptr){
+                        else if(s1 == nullptr && s2 == nullptr){
                             s2 = tempnode;
                             break;
                         }

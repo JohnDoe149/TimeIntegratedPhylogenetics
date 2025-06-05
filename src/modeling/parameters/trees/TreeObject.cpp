@@ -6,6 +6,7 @@
 #include "core/Alignment.hpp"
 #include <iostream>
 #include <cmath>
+#include "test.h"
 
 /*
 =======================================================================
@@ -14,8 +15,12 @@
 */
 
 TreeObject::TreeObject(int nt) : numTaxa(nt) {
-
+    #ifdef TEST
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    #endif
+    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
+    #endif
 
     root = addNode();
     root->setName("Root");

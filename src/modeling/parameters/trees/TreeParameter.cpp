@@ -106,7 +106,7 @@ double TreeParameter::update() {
             #ifdef TEST
             std::cout << "moving NNI\n";
             #endif
-            moveChoice = 2; //2 represents NNI cause I said so
+            moveChoice = 1; 
             branchCount += 0;
             TreeObject* tree = trees[0];
             std::vector<Node*> nodes = tree->getPostOrderSeq();
@@ -259,6 +259,10 @@ double TreeParameter::update() {
             while(needsCLupdate != root);
             root->setNeedsCLUpdate(true);
 
+            // tree flags and hastings time
+            tree->initPostOrder();
+            this->dirty();
+            hastings = 1; // we are equally likely to go back to where we started intuitively
         } 
         // fixed tree update
         else{

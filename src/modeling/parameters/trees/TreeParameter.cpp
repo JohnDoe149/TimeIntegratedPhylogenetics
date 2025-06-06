@@ -92,7 +92,7 @@ double TreeParameter::update() {
     #endif
      #ifdef TEST
      // always do a topology change
-    if(randomMove < 0.75){
+    if(randomMove < 0.99){
     #endif
     
         // Change topology because it is not a fixedTree
@@ -243,26 +243,23 @@ double TreeParameter::update() {
 
             // set some flags for the nodes affected by the changes, basically all nodes of the subtrees that 
             // got swapped and the flow via ancestors back to the root need to have CL update
-            swap1->setNeedsCLUpdate(true);
-            swap2->setNeedsCLUpdate(true);
-            Node *needsCLupdate = swap1->getAncestor();
-            do{
+            Node *needsCLupdate = swap1;
+            while(needsCLupdate != root){
                 needsCLupdate->setNeedsCLUpdate(true);
                 needsCLupdate = needsCLupdate->getAncestor();
             }
-            while(needsCLupdate != root);
-            Node *needsCLupdate = swap2->getAncestor();
-            do{
+
+            needsCLupdate = swap2;
+            while(needsCLupdate != root){
                 needsCLupdate->setNeedsCLUpdate(true);
                 needsCLupdate = needsCLupdate->getAncestor();
             }
-            while(needsCLupdate != root);
             root->setNeedsCLUpdate(true);
 
             // tree flags and hastings time
             tree->initPostOrder();
             this->dirty();
-            hastings = 1; // we are equally likely to go back to where we started intuitively
+            hastings = 0; // we are equally likely to go back to where we started intuitively
         } 
         // fixed tree update
         else{

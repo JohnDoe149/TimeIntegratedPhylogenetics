@@ -79,7 +79,7 @@ void TreeParameter::reject(){
 
 double TreeParameter::update() {
     #ifdef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    RandomVariable& rng = RandomVariable::randomVariableInstance(12);
     #endif
     #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
@@ -88,7 +88,12 @@ double TreeParameter::update() {
 
     double hastings = 0.0;
     
+    #ifndef TEST
     if(randomMove < 0.75){
+    #endif
+     #ifdef TEST
+    if(randomMove > 0){
+    #endif
         
         // Change topology and branch lengths because it is not a fixedTree
         if(!fixedTree){
@@ -98,7 +103,10 @@ double TreeParameter::update() {
             // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
             // out an internal subtree with a subtree that diverged earlier
             if(1){
-                int a = 1+1;
+
+                #ifdef TEST
+                std::cout << "moving NNI\n";
+                #endif
                 moveChoice = 2; //2 represents NNI cause I said so
                 branchCount += 0;
                 TreeObject* tree = trees[0];
@@ -118,7 +126,7 @@ double TreeParameter::update() {
                         internalNodeAncestor = internalNode->getAncestor();
                     }
                 }
-                while(internalNodeAncestor == nullptr || internalNodeAncestor == root);
+                while(internalNodeAncestor == nullptr || internalNodeAncestor == root || internalNode->getIsTip());
 
                 // we know that internalNodeAncestor is NOT the root, so we can safely get its ancestor
                 Node* internalNodeAncestorAncestor = internalNodeAncestor->getAncestor();
@@ -137,7 +145,7 @@ double TreeParameter::update() {
                         if(s1 == nullptr){
                             s1 = tempnode;
                         } 
-                        else if(s1 == nullptr && s2 == nullptr){
+                        else if(s1 != tempnode && s2 == nullptr){
                             s2 = tempnode;
                             break;
                         }
@@ -160,9 +168,9 @@ double TreeParameter::update() {
                 // s4 is the sibling of internalNodeAncestor, so repeat same process again but take
                 // into consideration that internalNodeAncestorAncestor may be the root
                 Node * internalNodeAncestorSibling = nullptr;
-                std::set<Node*> internalNodeAncestorSiblingNeighborSet = internalNodeAncestorSibling->getNeighbors();
+                std::set<Node*> internalNodeAncestorAncestorNeighborSet = internalNodeAncestorAncestor->getNeighbors();
                 while(1){
-                    tempnode = tempnode->chooseNodeFromSet(internalNodeAncestorNeighborSet);
+                    tempnode = tempnode->chooseNodeFromSet(internalNodeAncestorAncestorNeighborSet);
                     if(internalNodeAncestorAncestor == root && tempnode != internalNodeAncestor){
                         internalNodeAncestorSibling = tempnode;
                         break;
@@ -189,8 +197,8 @@ double TreeParameter::update() {
                 else{
                     swap2 = s4;
                 }
-                // we are essentially swapping s2 and s3, store s2's neighbor and ancestor
-                // before changing s2's place in the tree to be s3's
+                // we are essentially swapping swap1 and swap2, store swap1's neighbor and ancestor
+                // before setting swap1's to swap 2, then swap 2 to swap 1
                 Node* swap1Ancestor = swap1->getAncestor();
                 std::set<Node*> swap1NeighborSet = swap1->getNeighbors();
                 std::set<Node*> swap2NeighborSet = swap2->getNeighbors();
@@ -198,20 +206,43 @@ double TreeParameter::update() {
                 for(Node* n : swap1NeighborSet){
                     storeset.insert(n);
                 }
-                swap1NeighborSet.clear();
+                swap1->removeAllNeighbors();
 
-                // now "move" s2 into s3's location
+                // change swap1's neighbors and ancestors to swap2
                 swap1->setAncestor(swap2->getAncestor());
                 for(Node* n : swap2NeighborSet){
                     swap1->addNeighbor(n);
                 }
 
-                // now "move" s3 into s2's location
-                swap2NeighborSet.clear();
+                // now "move" swap2 into swap1's location
+                swap2->removeAllNeighbors();
                 swap2->setAncestor(swap1Ancestor);
                 for(Node* n: storeset){
-                    s3->addNeighbor(n);
+                    swap2->addNeighbor(n);
                 }
+
+                // now go through swap1's ancestors and neighbors and remove any mention of swap2
+                // and replace it with itself
+                for(Node *n: swap2NeighborSet){
+                    n->removeNeighbor(swap2);
+                    n->addNeighbor(swap1);
+                    Node *ancestor = n->getAncestor();
+                    if(ancestor == swap2){
+                        n->setAncestor(swap1);
+                    }
+                }
+
+                // now do the same for swap2
+                for(Node *n: swap1NeighborSet){
+                    n->removeNeighbor(swap1);
+                    n->addNeighbor(swap2);
+                    Node *ancestor = n->getAncestor();
+                    if(ancestor == swap1){
+                        n->setAncestor(swap2);
+                    }
+                }
+                                
+                    
                 
             } 
             else{

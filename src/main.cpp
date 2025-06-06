@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
     myMCMC.run();
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
     std::cout << "Analysis was completed in " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << "[m]" << std::endl;
 }
 #endif
@@ -48,12 +49,10 @@ int main(int argc, char* argv[]) {
     RandomVariable& rng = RandomVariable::randomVariableInstance(100);
     Alignment aln(settings.nexusInput);
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
-    std::cout << treeParam.writeNewick() << std::endl;
-    treeParam.update();
-    std::cout << treeParam.writeNewick() << std::endl;
-    std::cout << "new line";
-    // std::cout << treeParam.writeNewick() << std::endl;
-
-
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    for(int i = 0; i < 100; i++){
+        treeParam.update();
+        std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    }
 }
 #endif

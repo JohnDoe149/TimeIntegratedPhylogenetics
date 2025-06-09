@@ -125,7 +125,7 @@ double TreeParameter::update() {
                     internalNodeAncestor = internalNode->getAncestor();
                 }
             }
-            while(internalNodeAncestor == nullptr || internalNodeAncestor == root || internalNode->getIsTip());
+            while(internalNodeAncestor == nullptr || internalNodeAncestor == root || internalNode == root || internalNode->getIsTip());
 
             // we know that internalNodeAncestor is NOT the root, so we can safely get its ancestor
             Node* internalNodeAncestorAncestor = internalNodeAncestor->getAncestor();
@@ -222,26 +222,32 @@ double TreeParameter::update() {
                 swap2->addNeighbor(n);
             }
 
-            // now go through swap1's ancestors and neighbors and remove any mention of swap2
-            // and replace it with itself
-            for(Node *n: swap2NeighborSet){
-                n->removeNeighbor(swap2);
-                n->addNeighbor(swap1);
-                Node *ancestor = n->getAncestor();
-                if(ancestor == swap2){
-                    n->setAncestor(swap1);
-                }
-            }
+            // now go to the ancestor's of swap1 and swap2 and make them point to their new children
+            swap1Ancestor->removeNeighbor(swap1);
+            swap1Ancestor->addNeighbor(swap2);
+            Node* swap2Ancestor = swap1->getAncestor();
+            swap2Ancestor->removeNeighbor(swap2);
+            swap2Ancestor->addNeighbor(swap1);
+            // // now go through swap1's ancestors and neighbors and remove any mention of swap2
+            // // and replace it with itself
+            // for(Node *n: swap2NeighborSet){
+            //     n->removeNeighbor(swap2);
+            //     n->addNeighbor(swap1);
+            //     Node *ancestor = n->getAncestor();
+            //     if(ancestor == swap2){
+            //         n->setAncestor(swap1);
+            //     }
+            // }
 
-            // now do the same for swap2 
-            for(Node *n: swap1NeighborSet){
-                n->removeNeighbor(swap1);
-                n->addNeighbor(swap2);
-                Node *ancestor = n->getAncestor();
-                if(ancestor == swap1){
-                    n->setAncestor(swap2);
-                }
-            }  
+            // // now do the same for swap2 
+            // for(Node *n: swap1NeighborSet){
+            //     n->removeNeighbor(swap1);
+            //     n->addNeighbor(swap2);
+            //     Node *ancestor = n->getAncestor();
+            //     if(ancestor == swap1){
+            //         n->setAncestor(swap2);
+            //     }
+            // }  
 
             // set some flags for the nodes affected by the changes, basically all nodes of the subtrees that 
             // got swapped and the flow via ancestors back to the root need to have CL update

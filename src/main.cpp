@@ -50,16 +50,22 @@ int main(int argc, char* argv[]) {
     Alignment aln(settings.nexusInput);
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
     std::cout << treeParam.writeNewick() << "\n" << std::flush;
-    for(int i = 0; i < 100; i++){
-        treeParam.update();
-        treeParam.accept();
-        std::cout << treeParam.writeNewick() << "\n" << std::flush; 
-    }
-    // treeParam.update();
-    // treeParam.accept();
-    // std::cout << treeParam.writeNewick() << "\n" << std::flush;
-    // treeParam.update();
-    // treeParam.accept();
-    // std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    // for(int i = 0; i < 100; i++){
+    //     treeParam.update();
+    //     treeParam.accept();
+    //     std::cout << treeParam.writeNewick() << "\n" << std::flush; 
+    // }
+    treeParam.update();
+    treeParam.accept();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    treeParam.update();
+    treeParam.accept();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    treeParam.update();
+    treeParam.accept();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    treeParam.update();
+    treeParam.accept();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
 }
 #endif

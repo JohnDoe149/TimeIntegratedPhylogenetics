@@ -48,6 +48,9 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     oldPrior = currentPrior;
 
     dirty();
+    #ifdef TEST
+    trees[0]->setNodeNameIndex();
+    #endif
 }
 
 TreeParameter::~TreeParameter(){
@@ -92,7 +95,8 @@ double TreeParameter::update() {
     #endif
      #ifdef TEST
      // always do a topology change
-    if(randomMove < 0.99){
+    trees[0]->setNodeNameIndex();
+    if(randomMove > 0){
     #endif
     
         // Change topology because it is not a fixedTree
@@ -102,10 +106,6 @@ double TreeParameter::update() {
             // picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
             // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
             // out an internal subtree with a subtree that diverged earlier
-
-            #ifdef TEST
-            std::cout << "moving NNI\n";
-            #endif
             moveChoice = 1; 
             branchCount += 0;
             TreeObject* tree = trees[0];
@@ -170,11 +170,7 @@ double TreeParameter::update() {
             std::set<Node*> internalNodeAncestorAncestorNeighborSet = internalNodeAncestorAncestor->getNeighbors();
             while(1){
                 tempnode = tempnode->chooseNodeFromSet(internalNodeAncestorAncestorNeighborSet);
-                if(internalNodeAncestorAncestor == root && tempnode != internalNodeAncestor){
-                    internalNodeAncestorSibling = tempnode;
-                    break;
-                }
-                else if (tempnode != internalNodeAncestorAncestor && tempnode != internalNodeAncestor ){
+                if (tempnode != internalNodeAncestorAncestor->getAncestor() && tempnode != internalNodeAncestor ){
                     internalNodeAncestorSibling = tempnode;
                     break;
                 }
@@ -196,6 +192,12 @@ double TreeParameter::update() {
             else{
                 swap2 = s4;
             }
+
+            // debug message
+            #ifdef TEST
+                std::cout << "\nswapping " << swap1->getIndex() << " and " << swap2->getIndex() << "\n" << std::flush;
+            #endif
+
             // we are essentially swapping swap1 and swap2, store swap1's neighbor and ancestor
             // before setting swap1's to swap 2, then swap 2 to swap 1
             Node* swap1Ancestor = swap1->getAncestor();
@@ -245,13 +247,17 @@ double TreeParameter::update() {
             // got swapped and the flow via ancestors back to the root need to have CL update
             Node *needsCLupdate = swap1;
             while(needsCLupdate != root){
-                needsCLupdate->setNeedsCLUpdate(true);
+                if(!needsCLupdate->getIsTip()){
+                   needsCLupdate->setNeedsCLUpdate(true);
+                }
                 needsCLupdate = needsCLupdate->getAncestor();
             }
 
             needsCLupdate = swap2;
             while(needsCLupdate != root){
-                needsCLupdate->setNeedsCLUpdate(true);
+                if(!needsCLupdate->getIsTip()){
+                   needsCLupdate->setNeedsCLUpdate(true);
+                }
                 needsCLupdate = needsCLupdate->getAncestor();
             }
             root->setNeedsCLUpdate(true);

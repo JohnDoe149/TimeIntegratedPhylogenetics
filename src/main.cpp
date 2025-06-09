@@ -53,8 +53,13 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < 100; i++){
         treeParam.update();
         treeParam.accept();
-        std::cout << treeParam.writeNewick() << "\n" << std::flush;
+        std::cout << treeParam.writeNewick() << "\n" << std::flush; 
     }
-
+    // treeParam.update();
+    // treeParam.accept();
+    // std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    // treeParam.update();
+    // treeParam.accept();
+    // std::cout << treeParam.writeNewick() << "\n" << std::flush;
 }
 #endif

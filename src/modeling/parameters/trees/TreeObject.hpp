@@ -26,6 +26,7 @@ class TreeObject {
         std::map<Node*, double> getBranchLengthMapping();
         std::vector<double> getBranchLengths();
         std::string         getNewick() const;
+        // std::string         getNewickSimple() const;
         int                 getNumTaxa(){return numTaxa;}
         int                 getNumNodes(){return nodes.size();}
         std::vector<Node*>& getPostOrderSeq() {return postOrderSeq;}
@@ -39,7 +40,7 @@ class TreeObject {
         void                updateAll();
         void                accept();
         void                reject();
-        
+        void                setNodeNameIndex();
     private:
         Node*               addNode(void);
         std::map<Node*, double> branchLengths;
@@ -53,6 +54,7 @@ class TreeObject {
         Node*               root;
         void                showNode(Node* p, int indent) const;
         void                writeNode(Node* p, std::stringstream& strm) const;
+        // void                writeNodeSimple(Node* p, std::stringstream& strm) const;
 };
 
 #endif

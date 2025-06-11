@@ -291,12 +291,6 @@ std::string TreeObject::getNewick() const{
     return strm.str();
 }
 
-// std::string TreeObject::getNewickSimple() const{
-//     std::stringstream strm;
-//     writeNodeSimple(root, strm);
-//     return strm.str();
-// }
-
 std::vector<Node*> TreeObject::getTips() {
     std::vector<Node*> out;
     out.reserve(numTaxa);
@@ -460,33 +454,4 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
         strm << ":0.0;";
 }
 
-// //For outputting a very newick string
-// void TreeObject::writeNodeSimple(Node* p, std::stringstream& strm) const{
-//     if(p == nullptr)
-//         return;
-    
-//     if(!p->getIsTip())
-//         strm << "(";
-//     else
-//         strm << p->getName();
 
-//     std::set<Node*>& pDesc = p->getNeighbors();
-//     bool foundFirst = false;
-//     for(Node* n : pDesc){
-//         if(n != p->getAncestor()){
-//             if(foundFirst)
-//                 strm << ",";
-//             foundFirst = true;
-//             writeNode(n, strm);
-//         }
-//     }
-
-//     if(!p->getIsTip())
-//         strm << ")";
-
-//         // branch length hard coded to 1.0 to
-//     if(p->getAncestor() != nullptr)
-//         strm << ":1.0";
-//     else
-//         strm << ":0.0;";
-// }

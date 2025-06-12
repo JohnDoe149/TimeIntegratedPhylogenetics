@@ -19,7 +19,6 @@ class TreeParameter : public Parameter{
         double lnPrior();
 
         std::string writeNewick() {return trees[0]->getNewick();}
-        // std::string writeNewickSimple() {return trees[0]->getNewickSimple();}
 
         int branchCount;
         int branchAcceptCount;

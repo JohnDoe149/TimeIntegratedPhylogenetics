@@ -22,11 +22,14 @@ class TreeObject {
         TreeObject&         operator=(const TreeObject& rhs);
         void                flipAllTPs();
         void                flipAllCLs();
-        double              getBranchLength(Node* n) const;
-        std::map<Node*, double> getBranchLengthMapping();
-        std::vector<double> getBranchLengths();
+
+        // EVIL BRANCH LENGTH STYLE METHODS THAT SHOULD BE CHANGED
+        std::vector<double>              getGammaParams(Node* n) const;
+        std::map<Node*, std::vector<double>> getGammaMap();
+        std::vector<std::vector<double>> getGammas();
+        void                setGammaDist(Node* n, double alpha, double beta);
+
         std::string         getNewick() const;
-        // std::string         getNewickSimple() const;
         int                 getNumTaxa(){return numTaxa;}
         int                 getNumNodes(){return nodes.size();}
         std::vector<Node*>& getPostOrderSeq() {return postOrderSeq;}
@@ -36,25 +39,27 @@ class TreeObject {
         void                passDown(Node* p, std::vector<Node*>& vec);
         void                print(void) const;
         void                print(std::string header) const;
-        void                setBranchLength(Node* n, double length);
         void                updateAll();
         void                accept();
         void                reject();
         void                setNodeNameIndex();
     private:
         Node*               addNode(void);
-        std::map<Node*, double> branchLengths;
+
+        // EVIL BRANCH LENGTH MAP
+        // the double vector will have 2 (hahaha) double values, first represents alpha, second represents beta
+        std::map<Node*, std::vector<double>> branchGamma;
+
         void                clone(const TreeObject& t);
         void                deleteAllNodes();
         int                 getTaxonIndex(std::string token, std::vector<std::string> taxaNames);
-        std::vector<Node*>  nodes;
+        std::vector<Node*>  nodes;  
         int                 numTaxa;
         std::vector<std::string> parseNewickString(std::string newick);
         std::vector<Node*>  postOrderSeq;
         Node*               root;
         void                showNode(Node* p, int indent) const;
         void                writeNode(Node* p, std::stringstream& strm) const;
-        // void                writeNodeSimple(Node* p, std::stringstream& strm) const;
 };
 
 #endif

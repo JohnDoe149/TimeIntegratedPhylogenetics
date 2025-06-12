@@ -13,8 +13,8 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     fixedTree = newick != ""; // fixedTree is true if newick is not empty and false otherwise   
     if(!fixedTree) // if newick is an empty string
         trees[0] = new TreeObject(aln);
-    else // if newick is not empty this
-        trees[0] = new TreeObject(newick, aln->getTaxaNames());
+    // else // if newick is not empty this
+    //     trees[0] = new TreeObject(newick, aln->getTaxaNames());
 
     // if not a fixed tree, meaning the topology
     if(!fixedTree){
@@ -29,25 +29,25 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
         for(Node* n : nodes) {
             // if the current node is the root
             if(n != trees[0]->getRoot()) {
-                // a draw from the exponential distribution where it is a random rate and lambda is the time between occurences
-                // idk what that really means I read that online and I am unsure why a draw from an exponential is the branch length
-                // it may be that it is setting a flat prior for the branch length
-                trees[0]->setBranchLength(n, Probability::Exponential::rv(&rng, lambda));
+
+                trees[0]->setGammaDist(n, 0, 0);
             }
         }
     }
 
     trees[1] = new TreeObject(*trees[0]);
 
-    std::vector<double> values = trees[0]->getBranchLengths();
-    double totalLength = 0.0;
-    for(double val : values){
-        totalLength += val;
-    }
-    currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
-    oldPrior = currentPrior;
+    // FIX THIS BY IMPLEMENTING THE NEW GAMMA LIKELIHOOD CALCULATION
+    // std::vector<double> values = trees[0]->getBranchLengths();
+    // double totalLength = 0.0;
+    // for(double val : values){
+    //     totalLength += val;
+    // }
+    // currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
+    // oldPrior = currentPrior;
 
     dirty();
+
     #ifdef TEST
     trees[0]->setNodeNameIndex();
     #endif
@@ -232,19 +232,21 @@ double TreeParameter::update() {
     else { 
         moveChoice = 1;
         treeCount += 1;
-        std::map<Node*, double> branchMapping = trees[0]->getBranchLengthMapping();
+        // FIX THIS
+        // std::map<Node*, double> branchMapping = trees[0]->getBranchLengthMapping();
         trees[0]->updateAll();
         this->dirty();
 
         std::vector<double> values;
         std::vector<Node*> nodeIndices;
         double totalLength = 0.0;
-        for(auto mapping : branchMapping){
-            double l = mapping.second;
-            nodeIndices.push_back(mapping.first);
-            values.push_back(l);
-            totalLength += l;
-        }
+        // FIX THIS
+        // for(auto mapping : branchMapping){
+        //     double l = mapping.second;
+        //     nodeIndices.push_back(mapping.first);
+        //     values.push_back(l);
+        //     totalLength += l;
+        // }
 
         std::vector<double> alphaForward(values.size(), 0.0);
         std::vector<double> alphaReverse(values.size(), 0.0);
@@ -263,17 +265,19 @@ double TreeParameter::update() {
         
         hastings  = Probability::Dirichlet::lnPdf(alphaReverse, values) - Probability::Dirichlet::lnPdf(alphaForward, z);
 
-        for(int i = 0; i < values.size(); i++){
-            trees[0]->setBranchLength(nodeIndices[i], z[i] * totalLength);
-        } 
+        // for(int i = 0; i < values.size(); i++){
+        //     trees[0]->setBranchLength(nodeIndices[i], z[i] * totalLength);
+        // } 
     }
 
-    std::vector<double> values = trees[0]->getBranchLengths();
-    double totalLength = 0.0;
-    for(double val : values){
-        totalLength += val;
-    }
-    currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
+    // FIX THIS
+    // std::vector<double> values = trees[0]->getBranchLengths();
+    // double totalLength = 0.0;
+    // for(double val : values){
+    //     totalLength += val;
+    // }
+    // currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
+
     return hastings;
 }
 

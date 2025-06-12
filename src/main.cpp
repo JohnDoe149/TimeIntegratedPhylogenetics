@@ -49,24 +49,18 @@ int main(int argc, char* argv[]) {
     RandomVariable& rng = RandomVariable::randomVariableInstance(100);
     Alignment aln(settings.nexusInput);
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
-    std::cout << treeParam.writeNewick() << "\n" << std::flush;
-    for(int i = 0; i < 100; i++){
-        treeParam.update();
-        treeParam.accept();
-        std::cout << treeParam.writeNewick() << "\n" << std::flush; 
-        std::cout << i <<  "th cycle\n" << std::flush; 
+
+    // I just want to test gamma map and make sure it works
+    TreeObject *treeObject = treeParam.getTree();
+    std::vector<Node*> nodes = treeObject->getPostOrderSeq();
+    std::vector<double> gammaParams;
+    gammaParams.reserve(sizeof(double) * 2 );
+
+    for(Node* n: nodes){
+        treeObject->setGammaDist(n, 100*rng.uniformRv(), 100*rng.uniformRv());
+        gammaParams = treeObject->getGammaParams(n);
     }
-//     treeParam.update();
-//     treeParam.accept();
-//     std::cout << treeParam.writeNewick() << "\n" << std::flush;
-//     treeParam.update();
-//     treeParam.accept();
-//     std::cout << treeParam.writeNewick() << "\n" << std::flush;
-//     treeParam.update();
-//     treeParam.accept();
-//     std::cout << treeParam.writeNewick() << "\n" << std::flush;
-//     treeParam.update();
-//     treeParam.accept();
-//     std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    std::vector<std::vector<double>> allGammas = treeObject->getGammas();
+
 }
 #endif

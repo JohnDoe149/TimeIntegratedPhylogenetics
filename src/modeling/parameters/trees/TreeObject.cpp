@@ -71,8 +71,10 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
     for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
         Node* p = postOrderSeq[i];
         if (p->getAncestor() != nullptr)
+
                 // FIX LATER
-                this->setGammaDist(p, 0, 0);
+                // PRIOR SET TO 1, 1
+                this->setGammaDist(p, 1, 1);
     }
 
     // index the interior nodes (the tip nodes are indexed, above)

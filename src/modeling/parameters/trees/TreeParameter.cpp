@@ -96,7 +96,7 @@ double TreeParameter::update() {
         // picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
         // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
         // out an internal subtree with a subtree that diverged earlier
-        moveChoice = 1; 
+        moveChoice = 0; 
         branchCount += 0;
         TreeObject* tree = trees[0];
         std::vector<Node*> nodes = tree->getPostOrderSeq();
@@ -228,46 +228,59 @@ double TreeParameter::update() {
         hastings = 0; // we are equally likely to go back to where we started intuitively
     
     }
-    // 25% of the time we do a branch length update
+    // 25% of the time we do a gammaParam update
     else { 
         moveChoice = 1;
         treeCount += 1;
-        // FIX THIS
-        // std::map<Node*, double> branchMapping = trees[0]->getBranchLengthMapping();
+        std::map<Node*, std::vector<double>> gammaMapping = trees[0]->getGammaMap();
         trees[0]->updateAll();
         this->dirty();
 
-        std::vector<double> values;
+        std::vector<double> changeParam;
+        std::vector<double> otherParam;
         std::vector<Node*> nodeIndices;
-        double totalLength = 0.0;
-        // FIX THIS
-        // for(auto mapping : branchMapping){
-        //     double l = mapping.second;
-        //     nodeIndices.push_back(mapping.first);
-        //     values.push_back(l);
-        //     totalLength += l;
-        // }
+        double totalSum = 0.0;
+        
+        // there are two gammaParams to do an update for, pick one randomly
+        // we will propose an update to alpha (shape) if coinFlip is true or to beta (shape) is false
+        int coinFlip = (int)(rng.uniformRv() * 1);
+        int changeParamIndex = coinFlip ? 0 : 1;
+        int otherParamIndex = coinFlip ? 1 : 0;
+        for(auto mapping : gammaMapping){
+            double change = mapping.second[changeParamIndex];
+            double other = mapping.second[otherParamIndex];
+            nodeIndices.push_back(mapping.first);
+            changeParam.push_back(change);
+            otherParam.push_back(other);
+            totalSum += change;
+        }
 
-        std::vector<double> alphaForward(values.size(), 0.0);
-        std::vector<double> alphaReverse(values.size(), 0.0);
-        std::vector<double> z(values.size(), 0.0);
+        // create some empty vectors filled with 0
+        std::vector<double> alphaForward(changeParam.size(), 0.0);
+        std::vector<double> alphaReverse(changeParam.size(), 0.0);
+        std::vector<double> z(changeParam.size(), 0.0);
 
-        for(int i = 0; i < values.size(); i++) {
-            values[i] /= totalLength;
-            alphaForward[i] = values[i] * treeAlpha;
+        // sum normalize the dataset
+        for(int i = 0; i < changeParam.size(); i++) {
+            changeParam[i] /= totalSum;
+            alphaForward[i] = changeParam[i] * treeAlpha; //NOTE: may need to change treeAlpha later so it mixes better
         }
         
         Probability::Dirichlet::rv(&rng, alphaForward, z);
 
         for(int i = 0; i < z.size(); i++) {
-            alphaReverse[i] = z[i] * treeAlpha;
+            alphaReverse[i] = z[i] * treeAlpha; // how come we don't divide by treeAlpha here
         }
         
-        hastings  = Probability::Dirichlet::lnPdf(alphaReverse, values) - Probability::Dirichlet::lnPdf(alphaForward, z);
+        hastings  = Probability::Dirichlet::lnPdf(alphaReverse, changeParam) - Probability::Dirichlet::lnPdf(alphaForward, z);
 
-        // for(int i = 0; i < values.size(); i++){
-        //     trees[0]->setBranchLength(nodeIndices[i], z[i] * totalLength);
-        // } 
+        for(int i = 0; i < changeParam.size(); i++){
+            if(coinFlip){
+                trees[0]->setGammaDist(nodeIndices[i], z[i]*totalSum, otherParam[i]);
+            } else{
+                trees[0]->setGammaDist(nodeIndices[i], otherParam[i], z[i]*totalSum);
+            }
+        } 
     }
 
     // FIX THIS

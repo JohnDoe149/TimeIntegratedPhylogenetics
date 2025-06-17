@@ -67,13 +67,22 @@ void TransitionProbability::reject(void) {
 	}
 }
 
-void TransitionProbability::setProbs(const int state, const int rate, const int node, const double v) {
-	Matrix<double> P0 = (*this)(state, rate, node);
-	if (!isComplex[rate])
-		tiProbsEigens(v, P0, rateEigen[rate]);
-	else
-		tiProbsComplexEigens(v, P0, complexRateEigen[rate]);
+// FIX THIS TO CALCULATE TRANSITION PROB NEW WAY
+void TransitionProbability::setProbs(const int state, const int rate, const int node,std::vector<double> gammaParams) {
+	Matrix<double> P0 = (*this)(state, rate, node); // how are we getting this matrix
+	tiProbsGamma(gammaParams[0], gammaParams[1], P0);
+	// if (!isComplex[rate]) // check to see if we will have complex eigen values depending on the model
+	// 	tiProbsEigens(v, P0, rateEigen[rate]); // this is what always happens
+	// else
+	// 	tiProbsComplexEigens(v, P0, complexRateEigen[rate]);
 }
+
+// refer to write up for transition probability calculation from shape and scale
+// eigen decomposition?
+void TransitionProbability::tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix) {
+
+}
+
 
 /* This function calculates transition probabilities using
    complex eigenvalues and eigenvectors. */

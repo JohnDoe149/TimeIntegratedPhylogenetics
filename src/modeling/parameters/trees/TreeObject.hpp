@@ -23,7 +23,7 @@ class TreeObject {
         void                flipAllTPs();
         void                flipAllCLs();
 
-        // EVIL BRANCH LENGTH STYLE METHODS THAT SHOULD BE CHANGED
+        // new Gamma methods
         std::vector<double>              getGammaParams(Node* n) const;
         std::map<Node*, std::vector<double>> getGammaMap();
         std::vector<std::vector<double>> getGammas();

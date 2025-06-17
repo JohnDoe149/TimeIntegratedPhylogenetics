@@ -113,21 +113,24 @@ void Model::regenerateLikelihood(){
     //std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     if(rateMatrix->isDirty()){
-        activeT->updateAll();
+        activeT->updateAll(); // updateAll sets all nodes are not the tip to have their CL updated and all nodes to have TP updated
         transProb->updateQ(rateMatrix->Q(), 0);
     }
 
     //std::chrono::steady_clock::time_point rateTime = std::chrono::steady_clock::now();
     //std::cout << "Rate computation was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(rateTime - begin).count() << "[milliseconds]" << std::endl;
 
+    // for each node, 
     for(Node* n : poSeq){
         int nIndex = n->getIndex();
         if(n->getNeedsTPUpdate() == true){
             if(n != activeT->getRoot()) {
-                double v = activeT->getBranchLength(n);
+
+                // FIX THIS
+                std::vector<double> gammaVec = activeT->getGammaParams(n);
                 activeTP[nIndex] ^= true;
                 bool activeIndex = activeTP[nIndex];
-                transProb->setProbs(activeIndex, 0, nIndex, v);
+                transProb->setProbs(activeIndex, 0, nIndex, gammaVec); // I will need to change how the transition probability is calculated
             }
             n->setNeedsTPUpdate(false);
         }
@@ -144,6 +147,7 @@ void Model::regenerateLikelihood(){
 
     tf::Taskflow phyloTaskflow;
     
+    // CL likelihood calculation
     int chunkSize = 100;
     for(int range = 0; range < (int)std::ceil((double)numChar / chunkSize); range++){
         int start = range * chunkSize;

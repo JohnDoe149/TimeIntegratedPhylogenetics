@@ -50,17 +50,9 @@ int main(int argc, char* argv[]) {
     Alignment aln(settings.nexusInput);
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
 
-    // I just want to test gamma map and make sure it works
+    // I want to test the proposal
     TreeObject *treeObject = treeParam.getTree();
-    std::vector<Node*> nodes = treeObject->getPostOrderSeq();
-    std::vector<double> gammaParams;
-    gammaParams.reserve(sizeof(double) * 2 );
-
-    for(Node* n: nodes){
-        treeObject->setGammaDist(n, 100*rng.uniformRv(), 100*rng.uniformRv());
-        gammaParams = treeObject->getGammaParams(n);
-    }
-    std::vector<std::vector<double>> allGammas = treeObject->getGammas();
-
+    treeParam.update();
+    treeParam.accept();
 }
 #endif

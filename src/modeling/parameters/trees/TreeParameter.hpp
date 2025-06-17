@@ -11,10 +11,15 @@ class TreeParameter : public Parameter{
         ~TreeParameter();
         TreeObject* getTree(){return trees[0];}
 
-        void accept();
-        void reject();
+        // For making topology changes with NNI
+        void acceptTreeMove();
+        double updateTreeMove();
 
-        double update();
+        // for making length changes t
+        void acceptTreeGamma();
+        double updateTreeGamma();
+
+        void reject();
         void tune();
         double lnPrior();
 

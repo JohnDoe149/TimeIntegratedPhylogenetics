@@ -18,8 +18,11 @@ class TransitionProbability {
         int                     getNumStates(void) { return numStates; }
         int                     getNumMatrices(void) {return isComplex.size();}
         void                    accept(void);          
-        void                    reject(void);                                                                                   
-        void                    setProbs(const int state, const int r, const int node, const double v);
+        void                    reject(void);                  
+        
+        // CHANGED TO NOW ACCEPT GAMMA PARAMS INSTEAD OF BRANCH LENGTH
+        void                    setProbs(const int state, const int r, const int node, std::vector<double> gammaParams);
+
         std::vector<Matrix<double>>     generateProbs(Matrix<double> Q, std::vector<double> branches);
         void                    updateQ(Matrix<double> Q, const int index);
         void                    deleteQ(const int index);
@@ -36,6 +39,7 @@ class TransitionProbability {
         int                     numStates;
         std::vector<Matrix<double>*> probs1;
         std::vector<Matrix<double>*> probs2;
+        void                    tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix);
         void                    tiProbsComplexEigens(const double v, Matrix<double> &P, ComplexRateEigen& rE);
         void                    tiProbsEigens(const double v, Matrix<double> &P, RateEigen& rE);
 };

@@ -77,7 +77,6 @@ void TreeParameter::reject(){
     moveChoice = -1;
 }
 
-// IMPLEMENT THE ABILITY TO STEP AND A PROPER RESCALING 
 double TreeParameter::updateTreeGamma(){
     #ifdef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance(12);
@@ -87,7 +86,7 @@ double TreeParameter::updateTreeGamma(){
     #endif
     double hastings = 0.0;
 
-    moveChoice = 1;
+    moveChoice = 0;
     treeCount += 1;
 
     // pick a random node that is not the root to update one of their ancestor branch's gamma parameters
@@ -97,7 +96,7 @@ double TreeParameter::updateTreeGamma(){
     Node* treeRoot = tree->getRoot();
     do{
         randNode = nodes[(int)(rng.uniformRv() * nodes.size())];
-    } while(randNode != treeRoot);
+    } while(randNode == treeRoot);
     
     // flip a coin to determine which parameter to update (alpha if 1 or beta if 0)
     int coinFlip = (int)(rng.uniformRv() * 1);
@@ -116,13 +115,13 @@ double TreeParameter::updateTreeGamma(){
     if(!randNode->getIsTip()){
         randNode->setNeedsCLUpdate(true);
     }
-    Node* randNodeAnc = randNode->getAncestor();
+        Node* randNodeAnc = randNode->getAncestor();
     while(randNodeAnc != treeRoot){
         randNodeAnc->setNeedsCLUpdate(true);
-        randNodeAnc->getAncestor();
+        randNodeAnc = randNodeAnc->getAncestor();
     }
     treeRoot->setNeedsCLUpdate(true);
-
+    return hastings;
 }
 
 double TreeParameter::updateTreeMove() {
@@ -138,7 +137,7 @@ double TreeParameter::updateTreeMove() {
     // picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
     // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
     // out an internal subtree with a subtree that diverged earlier
-    moveChoice = 0; 
+    moveChoice = 1; 
     branchCount += 0;
     TreeObject* tree = trees[0];
     std::vector<Node*> nodes = tree->getPostOrderSeq();

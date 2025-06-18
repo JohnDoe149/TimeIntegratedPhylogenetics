@@ -52,7 +52,9 @@ int main(int argc, char* argv[]) {
 
     // I want to test the proposal
     TreeObject *treeObject = treeParam.getTree();
-    treeParam.update();
+    treeParam.updateTreeGamma();
+    treeParam.accept();
+    treeParam.updateTreeGamma();
     treeParam.accept();
 }
 #endif

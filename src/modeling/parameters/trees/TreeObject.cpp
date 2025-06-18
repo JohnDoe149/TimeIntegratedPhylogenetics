@@ -94,7 +94,6 @@ TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
         if(n->getIsTip())
             n->setName(names[n->getIndex()]);
     }
-    
 }
 
 // I am not going to think about starting alignments for now

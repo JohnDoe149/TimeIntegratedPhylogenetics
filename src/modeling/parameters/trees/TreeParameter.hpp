@@ -12,13 +12,11 @@ class TreeParameter : public Parameter{
         TreeObject* getTree(){return trees[0];}
 
         // For making topology changes with NNI
-        void acceptTreeMove();
         double updateTreeMove();
 
         // for making length changes t
-        void acceptTreeGamma();
         double updateTreeGamma();
-
+        void accept();
         void reject();
         void tune();
         double lnPrior();
@@ -33,6 +31,7 @@ class TreeParameter : public Parameter{
         bool fixedTree;
         int moveChoice;
         double branchDelta;
+        double gammaDelta;
         double treeAlpha;
         double lambda;
         double currentPrior;

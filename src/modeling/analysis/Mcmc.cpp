@@ -45,7 +45,8 @@ void Mcmc::burnin(){
         std::function<double()> updater;
 
         if(randomMove < treeChoice){
-            updater = [this]() { return tree->update(); };
+            // FIX THIS
+            updater = [this]() { return tree->updateTreeGamma(); };
         }
         else if(randomMove < stationaryChoice){
             updater = [this]() { return rateMatrix->updateStationary(); };
@@ -110,7 +111,7 @@ void Mcmc::run(){
         std::function<double()> updater;
 
         if(randomMove < treeChoice){
-            updater = [this]() { return tree->update(); };
+            updater = [this]() { return tree->updateTreeGamma(); };
         }
         else if(randomMove < stationaryChoice){
             updater = [this]() { return rateMatrix->updateStationary(); };

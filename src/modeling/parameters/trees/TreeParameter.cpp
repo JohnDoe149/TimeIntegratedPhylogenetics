@@ -94,9 +94,10 @@ double TreeParameter::updateTreeGamma(){
     TreeObject* tree = trees[0];
     std::vector<Node*> nodes = tree->getPostOrderSeq();
     Node* randNode = nullptr;
+    Node* treeRoot = tree->getRoot();
     do{
         randNode = nodes[(int)(rng.uniformRv() * nodes.size())];
-    } while(randNode != tree->getRoot());
+    } while(randNode != treeRoot);
     
     // flip a coin to determine which parameter to update (alpha if 1 or beta if 0)
     int coinFlip = (int)(rng.uniformRv() * 1);
@@ -104,64 +105,23 @@ double TreeParameter::updateTreeGamma(){
     double changeParam = gammaParams[coinFlip];
     
     // now do a simple rescaling proposal by drawing a multiplicative factor from a normal distribution
-    // CHECK TO SEE WHAT THE MU AND SIGMA OF NORMAL RV is
-    // double scale = std::exp(branchDelta * (rng.uniformRv() - 0.5));
-    double scale = Probability::Normal::rv(&rng);
-    double proposeParam = changeParam * gammaDelta;
+    double scale = std::exp(gammaDelta * (rng.uniformRv() - 0.5));
+    gammaParams[coinFlip] = gammaParams[coinFlip] * scale;
+    tree->setGammaDist(randNode, gammaParams[0], gammaParams[1]);
+    hastings = std::log(scale);
 
-    // the hastings is assymetrical as it is multiplicative, so lnpdf (reverse move) - lnpdf (forward move)
-    hastings = Probability::Normal::lnPdf(0, 1 , 1/gammaDelta) - Probability::Normal::lnPdf(0, 1, gammaDelta);
-
-
-    // std::map<Node*, std::vector<double>> gammaMapping = trees[0]->getGammaMap();
-    // trees[0]->updateAll();
-    // this->dirty();
-
-    // std::vector<double> changeParam;
-    // std::vector<double> otherParam;
-    // std::vector<Node*> nodeIndices;
-    // double totalSum = 0.0;
-    
-    // // there are two gammaParams to do an update for, pick one randomly
-    // // we will propose an update to alpha (shape) if coinFlip is true or to beta (shape) is false
-    // int coinFlip = (int)(rng.uniformRv() * 1);
-    // int changeParamIndex = coinFlip ? 0 : 1;
-    // int otherParamIndex = coinFlip ? 1 : 0;
-    // for(auto mapping : gammaMapping){
-    //     double change = mapping.second[changeParamIndex];
-    //     double other = mapping.second[otherParamIndex];
-    //     nodeIndices.push_back(mapping.first);
-    //     changeParam.push_back(change);
-    //     otherParam.push_back(other);
-    //     totalSum += change;
-    // }
-
-    // // create some empty vectors filled with 0
-    // std::vector<double> alphaForward(changeParam.size(), 0.0);
-    // std::vector<double> alphaReverse(changeParam.size(), 0.0);
-    // std::vector<double> z(changeParam.size(), 0.0);
-
-    // // sum normalize the dataset
-    // for(int i = 0; i < changeParam.size(); i++) {
-    //     changeParam[i] /= totalSum;
-    //     alphaForward[i] = changeParam[i] * treeAlpha; //NOTE: may need to change treeAlpha later so it mixes better
-    // }
-    
-    // Probability::Dirichlet::rv(&rng, alphaForward, z);
-
-    // for(int i = 0; i < z.size(); i++) {
-    //     alphaReverse[i] = z[i] * treeAlpha; // how come we don't divide by treeAlpha here
-    // }
-    
-    // hastings  = Probability::Dirichlet::lnPdf(alphaReverse, changeParam) - Probability::Dirichlet::lnPdf(alphaForward, z);
-
-    // for(int i = 0; i < changeParam.size(); i++){
-    //     if(coinFlip){
-    //         trees[0]->setGammaDist(nodeIndices[i], z[i]*totalSum, otherParam[i]);
-    //     } else{
-    //         trees[0]->setGammaDist(nodeIndices[i], otherParam[i], z[i]*totalSum);
-    //     }
-    // } 
+    // set flags for the changed node, changed alpha or beta means the TP changes and all nodes
+    // it "descended" from back to the root need to have their CL due felsenstein's algo
+    randNode->setNeedsTPUpdate(true);
+    if(!randNode->getIsTip()){
+        randNode->setNeedsCLUpdate(true);
+    }
+    Node* randNodeAnc = randNode->getAncestor();
+    while(randNodeAnc != treeRoot){
+        randNodeAnc->setNeedsCLUpdate(true);
+        randNodeAnc->getAncestor();
+    }
+    treeRoot->setNeedsCLUpdate(true);
 
 }
 

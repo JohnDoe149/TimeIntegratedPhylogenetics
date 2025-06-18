@@ -18,7 +18,7 @@ Mcmc::Mcmc(Model* m, TreeParameter* t, RateMatrix* rm, Settings& s) :
     sampleFreq = s.sampleFrequency;
     analysisLog = s.mcmcOutput;
     treeLog = s.treeOutput;
-
+ 
     treeChoice = s.treeWeight;
     stationaryChoice = treeChoice + s.stationaryWeight;
     rateChoice = stationaryChoice + s.rateWeight;
@@ -45,8 +45,14 @@ void Mcmc::burnin(){
         std::function<double()> updater;
 
         if(randomMove < treeChoice){
-            // FIX THIS
-            updater = [this]() { return tree->updateTreeGamma(); };
+
+            // pick between topology or branch update
+            int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
+            if(coinFlip){
+                updater = [this]() { return tree->updateTreeGamma(); };
+            } else{
+                updater = [this]() { return tree->updateTreeMove(); };
+            }
         }
         else if(randomMove < stationaryChoice){
             updater = [this]() { return rateMatrix->updateStationary(); };
@@ -111,7 +117,14 @@ void Mcmc::run(){
         std::function<double()> updater;
 
         if(randomMove < treeChoice){
-            updater = [this]() { return tree->updateTreeGamma(); };
+            
+            // pick between topology or branch update
+            int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
+            if(coinFlip){
+                updater = [this]() { return tree->updateTreeGamma(); };
+            } else{
+                updater = [this]() { return tree->updateTreeMove(); };
+            }
         }
         else if(randomMove < stationaryChoice){
             updater = [this]() { return rateMatrix->updateStationary(); };

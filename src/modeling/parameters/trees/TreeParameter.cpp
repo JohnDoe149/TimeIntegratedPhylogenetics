@@ -27,9 +27,11 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
         std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
         for(Node* n : nodes) {
             if(n != trees[0]->getRoot()) {
+
+                // assign random prior values
                 double alpha = Probability::Gamma::rv(&rng, 1, 1);
                 double beta = Probability::Gamma::rv(&rng, 1, 1);
-                trees[0]->setGammaDist(n, 1, 1);
+                trees[0]->setGammaDist(n, alpha, beta);
             }
         }
     }
@@ -99,7 +101,7 @@ double TreeParameter::updateTreeGamma(){
     } while(randNode == treeRoot);
     
     // flip a coin to determine which parameter to update (alpha if 1 or beta if 0)
-    int coinFlip = (int)(rng.uniformRv() * 1);
+    int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
     std::vector<double> gammaParams = tree->getGammaParams(randNode);
     double changeParam = gammaParams[coinFlip];
     
@@ -121,6 +123,10 @@ double TreeParameter::updateTreeGamma(){
         randNodeAnc = randNodeAnc->getAncestor();
     }
     treeRoot->setNeedsCLUpdate(true);
+    tree->initPostOrder();
+    this->dirty();
+
+    // currentPrior = ? // how to calculate currentPrior
     return hastings;
 }
 
@@ -210,7 +216,7 @@ double TreeParameter::updateTreeMove() {
 
     // now that we have our 4 subtrees, we need to do a coin flip to decide which rearrangement
     // to use. Fundamentally the swaps are the same but its just with different subtrees
-    int coinFlip = (int)(rng.uniformRv() * 1);
+    int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
     Node *swap1 = s2;
     Node *swap2 = coinFlip ? s3 : s4;
 

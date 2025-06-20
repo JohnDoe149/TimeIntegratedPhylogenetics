@@ -65,10 +65,16 @@ struct RateEigen {
 };
 
 struct ComplexRateEigen {
-    std::complex<double>* cc_ijk;
+    std::complex<double>* cc_ijk; 
     std::complex<double>* ceigenvalue;
     std::complex<double>* oldCC_ijk;
     std::complex<double>* oldCeigenvalue;
+
+    // johndu addition to support gammaDist model
+    std::complex<double>* cDiagLeftMatrix;
+    std::complex<double>* cDiagRightMatrix;
+    std::complex<double>* oldCDiagLeftMatrix;
+    std::complex<double>* oldCDiagRightMatrix;
     int numStates;
 
     ComplexRateEigen(int nS) : numStates(nS) {
@@ -76,13 +82,21 @@ struct ComplexRateEigen {
         ceigenvalue = new std::complex<double>[numStates];
         oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
         oldCeigenvalue = new std::complex<double>[numStates];
+        cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+        cDiagRightMatrix = new std::complex<double>[numStates * numStates];
+        oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+        oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
 
         std::fill(cc_ijk, cc_ijk + numStates * numStates * numStates, 0.0);
         std::fill(oldCC_ijk, oldCC_ijk + numStates * numStates * numStates, 0.0);
         std::fill(ceigenvalue, ceigenvalue + numStates, 0.0);
         std::fill(oldCeigenvalue, oldCeigenvalue + numStates, 0.0);  
+        std::fill(cDiagLeftMatrix, cDiagLeftMatrix + numStates * numStates, 0.0);
+        std::fill(cDiagRightMatrix, cDiagRightMatrix + numStates * numStates, 0.0);
+        std::fill(oldCDiagLeftMatrix, oldCDiagLeftMatrix + numStates * numStates, 0.0);
+        std::fill(oldCDiagRightMatrix, oldCDiagRightMatrix + numStates * numStates, 0.0);
     }
-    
+
 
     ComplexRateEigen(const ComplexRateEigen& other) {
         numStates = other.numStates;
@@ -90,11 +104,19 @@ struct ComplexRateEigen {
         ceigenvalue = new std::complex<double>[numStates];
         oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
         oldCeigenvalue = new std::complex<double>[numStates];
+        cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+        cDiagRightMatrix = new std::complex<double>[numStates * numStates];
+        oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+        oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
         
         std::copy(other.cc_ijk, other.cc_ijk + numStates * numStates * numStates, cc_ijk);
         std::copy(other.oldCC_ijk, other.oldCC_ijk + numStates * numStates * numStates, oldCC_ijk);
         std::copy(other.ceigenvalue, other.ceigenvalue + numStates, ceigenvalue);
         std::copy(other.oldCeigenvalue, other.oldCeigenvalue + numStates, oldCeigenvalue);
+        std::copy(other.cDiagLeftMatrix, other.cDiagLeftMatrix + numStates * numStates, cDiagLeftMatrix);
+        std::copy(other.cDiagRightMatrix, other.cDiagRightMatrix + numStates * numStates, cDiagRightMatrix);
+        std::copy(other.oldCDiagLeftMatrix, other.oldCDiagLeftMatrix + numStates * numStates, oldCDiagLeftMatrix);
+        std::copy(other.oldCDiagRightMatrix, other.oldCDiagRightMatrix + numStates * numStates, oldCDiagRightMatrix);
     }
 
     ComplexRateEigen& operator=(const ComplexRateEigen& other) {
@@ -103,17 +125,29 @@ struct ComplexRateEigen {
             delete [] ceigenvalue;
             delete [] oldCC_ijk;
             delete [] oldCeigenvalue;
+            delete [] cDiagLeftMatrix;
+            delete [] cDiagRightMatrix;
+            delete [] oldCDiagLeftMatrix;
+            delete [] oldCDiagRightMatrix;
 
             numStates = other.numStates;
             cc_ijk = new std::complex<double>[numStates * numStates * numStates];
             ceigenvalue = new std::complex<double>[numStates];
             oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
             oldCeigenvalue = new std::complex<double>[numStates];
+            cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+            cDiagRightMatrix = new std::complex<double>[numStates * numStates];
+            oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
+            oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
 
             std::copy(other.cc_ijk, other.cc_ijk + numStates * numStates * numStates, cc_ijk);
             std::copy(other.oldCC_ijk, other.oldCC_ijk + numStates * numStates * numStates, oldCC_ijk);
             std::copy(other.ceigenvalue, other.ceigenvalue + numStates, ceigenvalue);
             std::copy(other.oldCeigenvalue, other.oldCeigenvalue + numStates, oldCeigenvalue);
+            std::copy(other.cDiagLeftMatrix, other.cDiagLeftMatrix + numStates * numStates, cDiagLeftMatrix);
+            std::copy(other.cDiagRightMatrix, other.cDiagRightMatrix + numStates * numStates, cDiagRightMatrix);
+            std::copy(other.oldCDiagLeftMatrix, other.oldCDiagLeftMatrix + numStates * numStates, oldCDiagLeftMatrix);
+            std::copy(other.oldCDiagRightMatrix, other.oldCDiagRightMatrix + numStates * numStates, oldCDiagRightMatrix);
         }
         return *this;
     }
@@ -123,6 +157,10 @@ struct ComplexRateEigen {
     delete [] ceigenvalue;
     delete [] oldCC_ijk;
     delete [] oldCeigenvalue;
+    delete [] cDiagLeftMatrix;
+    delete [] cDiagRightMatrix;
+    delete [] oldCDiagLeftMatrix;
+    delete [] oldCDiagRightMatrix;
     }
 };
 

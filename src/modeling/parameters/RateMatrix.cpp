@@ -143,7 +143,7 @@ Matrix<double> RateMatrix::Q() {
     return returnMatrix;
 }
 
-void RateMatrix::tune(){
+void RateMatrix::tune(){ 
     double transitionRateRate = (double) rateAcceptCount/rateCount;
     if(transitionRateRate > 0.33){
         rateStepsize *= (1.0 + ((transitionRateRate-0.33)/0.67));

@@ -21,9 +21,10 @@ class TransitionProbability {
         void                    reject(void);                  
         
         // CHANGED TO NOW ACCEPT GAMMA PARAMS INSTEAD OF BRANCH LENGTH
-        void                    setProbs(const int state, const int r, const int node, std::vector<double> gammaParams);
-
+        void                    setProbs(const int state, const int r, const int node, double alpha, double beta);
+    
         std::vector<Matrix<double>>     generateProbs(Matrix<double> Q, std::vector<double> branches);
+        static Matrix<double> Q;
         void                    updateQ(Matrix<double> Q, const int index);
         void                    deleteQ(const int index);
         void                    deleteNQ(const int count);

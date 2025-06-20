@@ -8,8 +8,8 @@
 #include <test.h>
 
 TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
-                                                         branchDelta(1), moveChoice(-1), branchCount(0), branchAcceptCount(0), 
-                                                         treeCount(0), treeAcceptCount(0), treeAlpha(10000), gammaDelta(1.1) {
+                                                         moveChoice(-1), branchCount(0), branchAcceptCount(0), 
+                                                         treeCount(0), treeAcceptCount(0), gammaDelta(1.1) {
     fixedTree = newick != ""; // fixedTree is true if newick is not empty and false otherwise   
     if(!fixedTree) // if newick is an empty string
         trees[0] = new TreeObject(aln);
@@ -28,7 +28,7 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
         for(Node* n : nodes) {
             if(n != trees[0]->getRoot()) {
 
-                // assign random prior values
+                // alpha and beta both have gamma priors
                 double alpha = Probability::Gamma::rv(&rng, 1, 1);
                 double beta = Probability::Gamma::rv(&rng, 1, 1);
                 trees[0]->setGammaDist(n, alpha, beta);
@@ -89,7 +89,7 @@ double TreeParameter::updateTreeGamma(){
     double hastings = 0.0;
 
     moveChoice = 0;
-    treeCount += 1;
+    branchCount += 1;
 
     // pick a random node that is not the root to update one of their ancestor branch's gamma parameters
     TreeObject* tree = trees[0];
@@ -144,7 +144,7 @@ double TreeParameter::updateTreeMove() {
     // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
     // out an internal subtree with a subtree that diverged earlier
     moveChoice = 1; 
-    branchCount += 0;
+    treeCount += 0;
     TreeObject* tree = trees[0];
     std::vector<Node*> nodes = tree->getPostOrderSeq();
     Node* root = tree->getRoot();
@@ -270,24 +270,24 @@ void TreeParameter::tune() {
     double rate1 = (double)branchAcceptCount/(double)branchCount;
 
     if ( rate1 > 0.33 ) {
-        branchDelta *= (1.0 + ((rate1-0.33)/0.67));
+        gammaDelta *= (1.0 + ((rate1-0.33)/0.67));
     }
     else {
-        branchDelta /= (2.0 - rate1/0.33);
+        gammaDelta /= (2.0 - rate1/0.33);
     }
     branchAcceptCount = 0;
     branchCount = 0;
 
-    double rate2 = (double)treeAcceptCount/(double)treeCount;
+    // double rate2 = (double)treeAcceptCount/(double)treeCount;
 
-    if ( rate2 > 0.33 ) {
-        treeAlpha /= (1.0 + ((rate2-0.33)/0.67));
-    }
-    else {
-        treeAlpha *= (2.0 - rate2/0.33);
-    }
-    treeAcceptCount = 0;
-    treeCount = 0;
+    // if ( rate2 > 0.33 ) {
+    //     treeAlpha /= (1.0 + ((rate2-0.33)/0.67));
+    // }
+    // else {
+    //     treeAlpha *= (2.0 - rate2/0.33);
+    // }
+    // treeAcceptCount = 0;
+    // treeCount = 0;
 }
 
 double TreeParameter::lnPrior() {

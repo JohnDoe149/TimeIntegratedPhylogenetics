@@ -17,3 +17,6 @@ add_executable(main ${SOURCES})
 target_include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/lib/taskflow)
 
 target_link_libraries(main PRIVATE ncl_static)
+
+# comment out for debugging
+#set(CMAKE_CXX_FLAGS, "${CMAKE_CXX_FLAGS} -march=native -O3")

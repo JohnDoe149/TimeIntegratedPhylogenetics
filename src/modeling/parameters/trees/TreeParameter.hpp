@@ -30,9 +30,7 @@ class TreeParameter : public Parameter{
     private:
         bool fixedTree;
         int moveChoice;
-        double branchDelta;
         double gammaDelta;
-        double treeAlpha;
         double lambda;
         double currentPrior;
         double oldPrior;

@@ -68,21 +68,30 @@ void TransitionProbability::reject(void) {
 }
 
 // FIX THIS TO CALCULATE TRANSITION PROB NEW WAY
-void TransitionProbability::setProbs(const int state, const int rate, const int node,std::vector<double> gammaParams) {
-	Matrix<double> P0 = (*this)(state, rate, node); // how are we getting this matrix
-	tiProbsGamma(gammaParams[0], gammaParams[1], P0);
-	// if (!isComplex[rate]) // check to see if we will have complex eigen values depending on the model
-	// 	tiProbsEigens(v, P0, rateEigen[rate]); // this is what always happens
-	// else
-	// 	tiProbsComplexEigens(v, P0, complexRateEigen[rate]);
-}
+void TransitionProbability::setProbs(const int state, const int rate, const int node, double alpha, double beta) {
 
-// refer to write up for transition probability calculation from shape and scale
-// eigen decomposition?
-void TransitionProbability::tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix) {
+	// state decides which buffer the matrix will be pulled from. Node and rate help index into the buffer
+	// to get the right matrix. Rate is always 0, however due to the nature of how this model functions
+	Matrix<double> P0 = (*this)(state, rate, node); 
+	tiProbsGamma(alpha, beta, P0);
 
 }
 
+// Uses formula outlined in Huelsenbeck's "Bayesian Perspective on a Non-parsimonious Parsimony Model" to
+// calculate transition probability matrix ((IdentityMatrix - (1/scale|beta) * rateMatrix)^-(shape|alpha))
+void TransitionProbability::tiProbsGamma(const double shape, const double scale, Matrix<double>& P0) {
+	// Matrix<double> temp(Q.copy());
+	// temp *= 1/scale;
+	// Matrix<double> tempInv(temp.copy());
+	// for(int i = 0; i < temp.dim1(); i++){
+	// 	temp(i,i) = 1 - temp(i,i);
+	// }
+}
+
+// index is always 0 for this use case
+void TransitionProbability::updateQ(Matrix<double> Q, const int index) {
+	isComplex[index] = eigens->update(Q, rateEigen[index], complexRateEigen[index]);
+}
 
 /* This function calculates transition probabilities using
    complex eigenvalues and eigenvectors. */
@@ -133,10 +142,12 @@ void TransitionProbability::allocateQ(int size){
 		for(int i = 0, num = size - isComplex.size(); i < num; i++){
 			isComplex.push_back(false);
 			rateEigen.push_back(RateEigen(numStates));
-			complexRateEigen.push_back(ComplexRateEigen(numStates));
+			complexRateEigen.push_back(ComplexRateEigen(numStates)); //initialize a ComplexRateEigen struct
 
 			probs1.push_back(new Matrix<double>[numNodes]);
 			probs2.push_back(new Matrix<double>[numNodes]);
+
+			// for each node, initialize two matrices, one in probs1 and probs 2
 			for(int j = 0; j < numNodes; j++){
 				probs1.back()[j] = Matrix<double>(numStates, numStates, 0.0);
        	 		probs2.back()[j] = Matrix<double>(numStates, numStates, 0.0);
@@ -150,10 +161,6 @@ void TransitionProbability::allocateQ(int size){
 	probs1.shrink_to_fit();
 	probs2.shrink_to_fit();
 
-}
-
-void TransitionProbability::updateQ(Matrix<double> Q, const int index) {
-	isComplex[index] = eigens->update(Q, rateEigen[index], complexRateEigen[index]);
 }
 
 // Be sure you want to delete!!

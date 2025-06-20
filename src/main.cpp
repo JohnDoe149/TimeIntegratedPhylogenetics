@@ -49,6 +49,9 @@ int main(int argc, char* argv[]) {
     RandomVariable& rng = RandomVariable::randomVariableInstance(100);
     Alignment aln(settings.nexusInput);
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
+    RateMatrix rateMatrix(settings);
+    Matrix<double> Q = rateMatrix.Q();
+    Q.print();
 
     // I want to test the proposal
     TreeObject *treeObject = treeParam.getTree();

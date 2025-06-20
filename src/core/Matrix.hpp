@@ -76,6 +76,7 @@ public:
 		int   			dim2(void) const { return n; }                    //!< number of columns 
 		T*   			expose(void) { return v; }
 		int   			getRefCount(void) const { return *refCount; }     //!< get the number of matrices that share the same data 
+		void			print() const;
 
 	private: 
 		T*				v; 
@@ -92,7 +93,22 @@ template <class T> bool        operator!=(const Matrix<T> &A, const Matrix<T> &B
 
 // Definitions of inlined member functions
 
-/*!
+// a simple print function to print out all elements row by row
+template <class T>
+void Matrix<T>::print() const {
+	for(int row = 0; row < m; row++){
+		for(int col = 0; col < n; col++){
+			double num = v[row * n + col];
+			if(num < 0){
+				std::cout << std::fixed << std::setprecision(4) << v[row * n + col] << " ";
+			} else {
+				std::cout << std::fixed << std::setprecision(5) << v[row * n + col] << " ";
+			}
+		}
+		std::cout << "\n";
+	}
+}
+	/*!
  * Copy constructor, which creates a shallow copy of the
  * MbMatrix argument. Matrix data are not copied but shared.
  * Thus, in MbMatrix B(A), subsequent changes to A will be

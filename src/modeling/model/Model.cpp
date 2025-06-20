@@ -114,7 +114,7 @@ void Model::regenerateLikelihood(){
 
     if(rateMatrix->isDirty()){
         activeT->updateAll(); // updateAll sets all nodes are not the tip to have their CL updated and all nodes to have TP updated
-        transProb->updateQ(rateMatrix->Q(), 0);
+        transProb->updateQ(rateMatrix->Q());
     }
 
     //std::chrono::steady_clock::time_point rateTime = std::chrono::steady_clock::now();
@@ -130,7 +130,7 @@ void Model::regenerateLikelihood(){
                 std::vector<double> gammaVec = activeT->getGammaParams(n);
                 activeTP[nIndex] ^= true;
                 bool activeIndex = activeTP[nIndex];
-                transProb->setProbs(activeIndex, 0, nIndex, gammaVec); // I will need to change how the transition probability is calculated
+                transProb->setProbs(activeIndex, 0, nIndex, gammaVec[0], gammaVec[1]);// I will need to change how the transition probability is calculated
             }
             n->setNeedsTPUpdate(false);
         }

@@ -8,6 +8,12 @@ struct RateEigen {
     double* eigenvalue;
     double* oldC_ijk;
     double* oldEigenvalue;
+    
+    // johndu addition to support gammaDist model
+    double* diagLeftMatrix;
+    double* oldDiagLeftMatrix;
+    double* diagRightMatrix;
+    double* oldDiagRightMatrix;
     int numStates;
 
     RateEigen(int nS) : numStates(nS) {
@@ -15,11 +21,19 @@ struct RateEigen {
         eigenvalue = new double[numStates];
         oldC_ijk = new double[numStates * numStates * numStates];
         oldEigenvalue = new double[numStates];
+        diagLeftMatrix = new double[numStates * numStates];
+        oldDiagLeftMatrix = new double[numStates * numStates];
+        diagRightMatrix = new double[numStates * numStates];
+        oldDiagRightMatrix = new double[numStates * numStates];
 
         std::fill(c_ijk, c_ijk + numStates * numStates * numStates, 0.0);
         std::fill(oldC_ijk, oldC_ijk + numStates * numStates * numStates, 0.0);
         std::fill(eigenvalue, eigenvalue + numStates, 0.0);
         std::fill(oldEigenvalue, oldEigenvalue + numStates, 0.0);
+        std::fill(diagLeftMatrix, diagLeftMatrix + numStates * numStates, 0.0);
+        std::fill(oldDiagLeftMatrix, oldDiagLeftMatrix + numStates * numStates, 0.0);
+        std::fill(diagRightMatrix, diagRightMatrix + numStates * numStates, 0.0);
+        std::fill(oldDiagRightMatrix, oldDiagRightMatrix + numStates * numStates, 0.0);
     }
 
     RateEigen(const RateEigen& other) {
@@ -28,11 +42,19 @@ struct RateEigen {
         eigenvalue = new double[numStates];
         oldC_ijk = new double[numStates * numStates * numStates];
         oldEigenvalue = new double[numStates];
+        diagLeftMatrix = new double[numStates * numStates];
+        oldDiagLeftMatrix = new double[numStates * numStates];
+        diagRightMatrix = new double[numStates * numStates];
+        oldDiagRightMatrix = new double[numStates * numStates];
         
         std::copy(other.c_ijk, other.c_ijk + numStates * numStates * numStates, c_ijk);
         std::copy(other.oldC_ijk, other.oldC_ijk + numStates * numStates * numStates, oldC_ijk);
         std::copy(other.eigenvalue, other.eigenvalue + numStates, eigenvalue);
         std::copy(other.oldEigenvalue, other.oldEigenvalue + numStates, oldEigenvalue);
+        std::copy(other.diagLeftMatrix, other.diagLeftMatrix + numStates * numStates, diagLeftMatrix);
+        std::copy(other.oldDiagLeftMatrix, other.oldDiagLeftMatrix + numStates * numStates, oldDiagLeftMatrix);
+        std::copy(other.diagRightMatrix, other.diagRightMatrix + numStates * numStates, diagRightMatrix);
+        std::copy(other.oldDiagRightMatrix, other.diagLeftMatrix + numStates * numStates, diagRightMatrix);
     }
 
     RateEigen& operator=(const RateEigen& other) {
@@ -41,17 +63,30 @@ struct RateEigen {
             delete [] eigenvalue;
             delete [] oldC_ijk;
             delete [] oldEigenvalue;
+            delete [] diagLeftMatrix;
+            delete [] oldDiagLeftMatrix;
+            delete [] oldDiagRightMatrix;
+            delete [] oldDiagRightMatrix;
+
 
             numStates = other.numStates;
             c_ijk = new double[numStates * numStates * numStates];
             eigenvalue = new double[numStates];
             oldC_ijk = new double[numStates * numStates * numStates];
             oldEigenvalue = new double[numStates];
+            diagLeftMatrix = new double[numStates * numStates];
+            oldDiagLeftMatrix = new double[numStates * numStates];
+            diagRightMatrix = new double[numStates * numStates];
+            oldDiagRightMatrix = new double[numStates * numStates];
 
             std::copy(other.c_ijk, other.c_ijk + numStates * numStates * numStates, c_ijk);
             std::copy(other.oldC_ijk, other.oldC_ijk + numStates * numStates * numStates, oldC_ijk);
             std::copy(other.eigenvalue, other.eigenvalue + numStates, eigenvalue);
             std::copy(other.oldEigenvalue, other.oldEigenvalue + numStates, oldEigenvalue);
+            std::copy(other.diagLeftMatrix, other.diagLeftMatrix + numStates * numStates, diagLeftMatrix);
+            std::copy(other.oldDiagLeftMatrix, other.oldDiagLeftMatrix + numStates * numStates, oldDiagLeftMatrix);
+            std::copy(other.diagRightMatrix, other.diagRightMatrix + numStates * numStates, diagRightMatrix);
+            std::copy(other.oldDiagRightMatrix, other.diagLeftMatrix + numStates * numStates, diagRightMatrix);
         }
         return *this;
     }
@@ -61,6 +96,10 @@ struct RateEigen {
     delete [] eigenvalue;
     delete [] oldEigenvalue;
     delete [] oldC_ijk;
+    delete [] diagLeftMatrix;
+    delete [] oldDiagLeftMatrix;
+    delete [] diagRightMatrix;
+    delete [] oldDiagRightMatrix;
     }
 };
 

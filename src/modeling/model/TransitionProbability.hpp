@@ -24,8 +24,7 @@ class TransitionProbability {
         void                    setProbs(const int state, const int r, const int node, double alpha, double beta);
     
         std::vector<Matrix<double>>     generateProbs(Matrix<double> Q, std::vector<double> branches);
-        static Matrix<double> Q;
-        void                    updateQ(Matrix<double> Q, const int index);
+        void                    updateQ(Matrix<double> Q);
         void                    deleteQ(const int index);
         void                    deleteNQ(const int count);
         void                    allocateQ(int size);
@@ -38,6 +37,7 @@ class TransitionProbability {
         std::vector<bool>       isOldComplex;
         int                     numNodes;
         int                     numStates;
+        Matrix<double>          Q;
         std::vector<Matrix<double>*> probs1;
         std::vector<Matrix<double>*> probs2;
         void                    tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix);

@@ -273,3 +273,6 @@ std::string Model::treeHeader(){
 std::string Model::treeOut(int i){
     return std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" + tree->writeNewick() + "\n";
 }
+
+
+

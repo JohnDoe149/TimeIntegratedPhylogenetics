@@ -1,5 +1,6 @@
 #include <complex>
 #include "TransitionProbability.hpp"
+#include "core/RateEigens.hpp"
 #include "core/Math.hpp"
 #include <cstring>
 
@@ -21,7 +22,7 @@ TransitionProbability::TransitionProbability(const int nn)
 	eigens = new EigenSystem(numStates);
 	
 	allocateQ(1);
-	updateQ(Q, 0);
+	updateQ(Q);
 	accept();
 }
 
@@ -37,7 +38,6 @@ TransitionProbability::~TransitionProbability(void) {
 		delete [] i;
 	}
 }
-
 
 void TransitionProbability::accept(void) {
 	isOldComplex = isComplex;
@@ -72,69 +72,35 @@ void TransitionProbability::setProbs(const int state, const int rate, const int 
 
 	// state decides which buffer the matrix will be pulled from. Node and rate help index into the buffer
 	// to get the right matrix. Rate is always 0, however due to the nature of how this model functions
-	Matrix<double> P0 = (*this)(state, rate, node); 
+	Matrix<double> P0 = (*this)(state, rate, node);  // this is the transition probability
 	tiProbsGamma(alpha, beta, P0);
-
 }
 
 // Uses formula outlined in Huelsenbeck's "Bayesian Perspective on a Non-parsimonious Parsimony Model" to
 // calculate transition probability matrix ((IdentityMatrix - (1/scale|beta) * rateMatrix)^-(shape|alpha))
 void TransitionProbability::tiProbsGamma(const double shape, const double scale, Matrix<double>& P0) {
-	// Matrix<double> temp(Q.copy());
-	// temp *= 1/scale;
-	// Matrix<double> tempInv(temp.copy());
-	// for(int i = 0; i < temp.dim1(); i++){
-	// 	temp(i,i) = 1 - temp(i,i);
-	// }
+	Matrix<double> temp(Q.copy());
+	std::cout << "starting matrix: \n";
+	temp.print();
+	temp *= 1/scale;
+	for(int i = 0; i < temp.dim1(); i++){
+		temp(i,i) = 1 - temp(i,i);
+	}
+	std::cout << "matrix predecomposition: \n";
+	temp.print();
+	// get the eigenvalues and eigenvectors
+	Matrix<double> eigenDecompTemp(temp.copy());
+	isComplex[0] = eigens->update(eigenDecompTemp, rateEigen[0], complexRateEigen[0]);
+	RateEigen newEigenVectors = rateEigen[0];
+	double* eigenvalues = newEigenVectors.eigenvalue;
+	std::cout << "eigenvalues: \n";
+	std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;
+	// now print rateEigen and complexRateEigen and verify it worked correctly
+	// also modify eigens->update to insert the eigenvectors into leftDiagMatrix
 }
 
-// index is always 0 for this use case
-void TransitionProbability::updateQ(Matrix<double> Q, const int index) {
-	isComplex[index] = eigens->update(Q, rateEigen[index], complexRateEigen[index]);
-}
-
-/* This function calculates transition probabilities using
-   complex eigenvalues and eigenvectors. */
-void TransitionProbability::tiProbsComplexEigens(const double v, Matrix<double>& P, ComplexRateEigen& rE) {
-
-	std::vector<std::complex<double>> ceigValExp;
-
-	for (int s=0; s<numStates; s++)
-		ceigValExp.push_back(exp(rE.ceigenvalue[s] * v));
-
-	const std::complex<double>* ptr = rE.cc_ijk;
-	for (int i=0; i<numStates; i++)
-		{
-		for (int j=0; j<numStates; j++) 
-			{
-			std::complex<double> sum = std::complex<double>(0.0, 0.0);
-			for(int s=0; s<numStates; s++)
-				sum += (*ptr++) * ceigValExp[s];
-			P(i, j) = (sum.real() < 0.0) ? 0.0 : sum.real();
-			}
-		}
-}
-
-/* This function calculates transition probabilities using
-   eigenvalues and eigenvectors. */
-void TransitionProbability::tiProbsEigens(const double v, Matrix<double> &P, RateEigen& rE) {
-	
-	std::vector<double> eigValExp;
-
-	for (int s=0; s<numStates; s++)
-		eigValExp.push_back(exp(rE.eigenvalue[s] * v));
-
-	double *ptr = rE.c_ijk;
-	for (int i=0; i<numStates; i++) 
-		{
-		for (int j=0; j<numStates; j++) 
-			{
-			double sum = 0.0;
-			for(int s=0; s<numStates; s++)
-				sum += (*ptr++) * eigValExp[s];
-			P(i, j) = (sum < 0.0) ? 0.0 : sum;
-			}
-		}
+void TransitionProbability::updateQ(Matrix<double> otherQ){
+	Q = otherQ;
 }
 
 void TransitionProbability::allocateQ(int size){

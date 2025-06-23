@@ -43,8 +43,8 @@ class Model {
         int stateSpace;
         int numChar;
         int numNodes;
-        bool* activeTP;
         bool* activeCL;
+        bool* activeTP;
         tf::Executor executor;
         RateMatrix* rateMatrix;
         Alignment* aln;

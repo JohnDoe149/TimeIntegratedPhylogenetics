@@ -51,13 +51,22 @@ int main(int argc, char* argv[]) {
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
     RateMatrix rateMatrix(settings);
     Matrix<double> Q = rateMatrix.Q();
-    Q.print();
-
-    // I want to test the proposal
     TreeObject *treeObject = treeParam.getTree();
-    treeParam.updateTreeGamma();
-    treeParam.accept();
-    treeParam.updateTreeGamma();
-    treeParam.accept();
+    TransitionProbability *transProb = new TransitionProbability(treeObject->getNumNodes());
+    transProb->updateQ(Q);
+
+    const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
+    for(Node* n : poSeq){
+        int nIndex = n->getIndex();
+        if(n != treeObject->getRoot()) {
+            n->setNeedsTPUpdate(true);
+            std::vector<double> gammaVec = treeObject->getGammaParams(n);
+
+            // inside the setProbs method, we will be able to see the transition matrix p0
+            transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
+            return 1;
+        }
+        n->setNeedsTPUpdate(false);
+    }
 }
 #endif

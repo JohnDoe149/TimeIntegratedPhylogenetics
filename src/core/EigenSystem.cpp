@@ -1043,7 +1043,6 @@ int EigenSystem::luDecompose(Matrix<double>& a, double* vv, int* indx, double* p
 }
 
 bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRateEigen& complexEigens) {
-	
 	Matrix<double> eigenVectors(n, n, 0.0);
 	Matrix<double> inverseEigenVectors(n, n, 0.0);
 	std::vector<double> realEigenValues(n, 0.0);

@@ -127,13 +127,20 @@ Matrix<double> RateMatrix::Q() {
     for(int i = 0; i < 4; i++){
         double total = 0.0;
         for(int j = 0; j < 4; j++){
+
+            // if not diagonal, sum up total so we can make the diagonal the additive inverse
+            // returnMatrix.print();
+            // std::cout << "break \n";
             if(j != i){
+                returnMatrix(i,j) = currentStationary[j] * returnMatrix(i,j);
                 total += returnMatrix(i , j);
-            }
+            } 
+            // returnMatrix.print();
+            // std::cout << "break \n";
         }
         returnMatrix(i, i) = total * -1;
         scaler += returnMatrix(i, i) * currentStationary[i];
-    }	
+    }
 
     scaler = -1.0 / scaler;
     for (int i = 0; i < 4; i++)

@@ -92,6 +92,12 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	Matrix<double> eigenDecompTemp(temp.copy());
 	isComplex[0] = eigens->update(eigenDecompTemp, rateEigen[0], complexRateEigen[0]);
 	RateEigen newEigenVectors = rateEigen[0];
+	Matrix<double> *leftMatrix = newEigenVectors.diagLeftMatrix;
+	Matrix<double> *rightMatrix = newEigenVectors.diagRightMatrix;
+	std::cout << "rightmatrix postdecomposition: \n";
+	rightMatrix->print();
+	std::cout << "left matrix postdecomposition: \n";
+	leftMatrix->print();
 	double* eigenvalues = newEigenVectors.eigenvalue;
 	std::cout << "eigenvalues: \n";
 	std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;

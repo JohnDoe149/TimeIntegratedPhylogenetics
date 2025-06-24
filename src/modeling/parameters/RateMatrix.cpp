@@ -5,14 +5,19 @@
 #include "core/Settings.hpp"
 #include <cmath>
 #include <algorithm>
+#include "test.h"
 
 RateMatrix::RateMatrix(Settings settings) : 
                                    currentQMatrix(4, 4, 0.0), oldQMatrix(4, 4, 0.0), 
                                    currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50), rateStepsize(0.3), 
                                    rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0){
 
+    #ifdef TEST
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    #endif TEST
+    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-
+    #endif TEST
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             if(i != j)
@@ -132,7 +137,9 @@ Matrix<double> RateMatrix::Q() {
             // returnMatrix.print();
             // std::cout << "break \n";
             if(j != i){
+                #ifdef TEST
                 returnMatrix(i,j) = currentStationary[j] * returnMatrix(i,j);
+                #endif TEST
                 total += returnMatrix(i , j);
             } 
             // returnMatrix.print();

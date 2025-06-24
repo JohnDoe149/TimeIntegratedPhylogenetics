@@ -1091,7 +1091,7 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 		}
 
 		// A and inverseEigenVectors are the left and right hand side of the diagonalized form respectively
-		eigens.diagLeftMatrix->inject(A);
+		eigens.diagLeftMatrix->inject(eigenVectors);
 		eigens.diagRightMatrix->inject(inverseEigenVectors);
 
 		// this is not as relevant to me right now; it is a legacy artifact

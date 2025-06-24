@@ -101,10 +101,21 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	double* eigenvalues = newEigenVectors.eigenvalue;
 	std::cout << "eigenvalues: \n";
 	std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;
-	// now print rateEigen and complexRateEigen and verify it worked correctly
-	// also modify eigens->update to insert the eigenvectors into leftDiagMatrix
-}
 
+	// take the eigenvalues to the power of -(shape|alpha) to mimic A^-x = P * D^-x * P^-1 as part of taking the matrix to the
+	// -(shape|alpha) power to get our diagonal matrix
+	Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
+	for(int i = 0; i < Q.dim1(); i++){
+		diagonalMatrix(i, i) = pow(eigenvalues[i], -1 * shape);
+	}
+	std::cout << "diagonal matrix: \n";
+	diagonalMatrix.print();
+
+	// now get transitionProbability matrix by using the property A = P*D*P^-1
+	P0 = ((*leftMatrix) * diagonalMatrix)*(*rightMatrix); 
+	std::cout << "transition probability matrix: \n";
+	P0.print();
+}
 void TransitionProbability::updateQ(Matrix<double> otherQ){
 	Q = otherQ;
 }

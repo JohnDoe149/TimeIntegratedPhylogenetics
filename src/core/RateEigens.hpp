@@ -10,10 +10,10 @@ struct RateEigen {
     double* oldEigenvalue;
     
     // johndu addition to support gammaDist model
-    double* diagLeftMatrix;
-    double* oldDiagLeftMatrix;
-    double* diagRightMatrix;
-    double* oldDiagRightMatrix;
+    Matrix<double>* diagLeftMatrix;
+    Matrix<double>* oldDiagLeftMatrix;
+    Matrix<double>* diagRightMatrix;
+    Matrix<double>* oldDiagRightMatrix;
     int numStates;
 
     RateEigen(int nS) : numStates(nS) {
@@ -21,19 +21,15 @@ struct RateEigen {
         eigenvalue = new double[numStates];
         oldC_ijk = new double[numStates * numStates * numStates];
         oldEigenvalue = new double[numStates];
-        diagLeftMatrix = new double[numStates * numStates];
-        oldDiagLeftMatrix = new double[numStates * numStates];
-        diagRightMatrix = new double[numStates * numStates];
-        oldDiagRightMatrix = new double[numStates * numStates];
+        diagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        oldDiagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        diagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        oldDiagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
 
         std::fill(c_ijk, c_ijk + numStates * numStates * numStates, 0.0);
         std::fill(oldC_ijk, oldC_ijk + numStates * numStates * numStates, 0.0);
         std::fill(eigenvalue, eigenvalue + numStates, 0.0);
         std::fill(oldEigenvalue, oldEigenvalue + numStates, 0.0);
-        std::fill(diagLeftMatrix, diagLeftMatrix + numStates * numStates, 0.0);
-        std::fill(oldDiagLeftMatrix, oldDiagLeftMatrix + numStates * numStates, 0.0);
-        std::fill(diagRightMatrix, diagRightMatrix + numStates * numStates, 0.0);
-        std::fill(oldDiagRightMatrix, oldDiagRightMatrix + numStates * numStates, 0.0);
     }
 
     RateEigen(const RateEigen& other) {
@@ -42,19 +38,19 @@ struct RateEigen {
         eigenvalue = new double[numStates];
         oldC_ijk = new double[numStates * numStates * numStates];
         oldEigenvalue = new double[numStates];
-        diagLeftMatrix = new double[numStates * numStates];
-        oldDiagLeftMatrix = new double[numStates * numStates];
-        diagRightMatrix = new double[numStates * numStates];
-        oldDiagRightMatrix = new double[numStates * numStates];
+        diagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        oldDiagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        diagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
+        oldDiagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
         
         std::copy(other.c_ijk, other.c_ijk + numStates * numStates * numStates, c_ijk);
         std::copy(other.oldC_ijk, other.oldC_ijk + numStates * numStates * numStates, oldC_ijk);
         std::copy(other.eigenvalue, other.eigenvalue + numStates, eigenvalue);
         std::copy(other.oldEigenvalue, other.oldEigenvalue + numStates, oldEigenvalue);
-        std::copy(other.diagLeftMatrix, other.diagLeftMatrix + numStates * numStates, diagLeftMatrix);
-        std::copy(other.oldDiagLeftMatrix, other.oldDiagLeftMatrix + numStates * numStates, oldDiagLeftMatrix);
-        std::copy(other.diagRightMatrix, other.diagRightMatrix + numStates * numStates, diagRightMatrix);
-        std::copy(other.oldDiagRightMatrix, other.diagLeftMatrix + numStates * numStates, diagRightMatrix);
+        diagLeftMatrix->inject(*(other.diagLeftMatrix));
+        oldDiagLeftMatrix->inject(*(other.oldDiagLeftMatrix));
+        diagRightMatrix->inject(*(other.diagRightMatrix));
+        oldDiagRightMatrix->inject(*(other.oldDiagRightMatrix));
     }
 
     RateEigen& operator=(const RateEigen& other) {
@@ -63,30 +59,26 @@ struct RateEigen {
             delete [] eigenvalue;
             delete [] oldC_ijk;
             delete [] oldEigenvalue;
-            delete [] diagLeftMatrix;
-            delete [] oldDiagLeftMatrix;
-            delete [] oldDiagRightMatrix;
-            delete [] oldDiagRightMatrix;
-
+            delete diagLeftMatrix;
+            delete diagRightMatrix;
+            delete oldDiagLeftMatrix;
+            delete oldDiagRightMatrix;
 
             numStates = other.numStates;
             c_ijk = new double[numStates * numStates * numStates];
             eigenvalue = new double[numStates];
             oldC_ijk = new double[numStates * numStates * numStates];
             oldEigenvalue = new double[numStates];
-            diagLeftMatrix = new double[numStates * numStates];
-            oldDiagLeftMatrix = new double[numStates * numStates];
-            diagRightMatrix = new double[numStates * numStates];
-            oldDiagRightMatrix = new double[numStates * numStates];
+
+            diagLeftMatrix->inject(*(other.diagLeftMatrix));
+            oldDiagLeftMatrix->inject(*(other.oldDiagLeftMatrix));
+            diagRightMatrix->inject(*(other.diagRightMatrix));
+            oldDiagRightMatrix->inject(*(other.oldDiagRightMatrix));
 
             std::copy(other.c_ijk, other.c_ijk + numStates * numStates * numStates, c_ijk);
             std::copy(other.oldC_ijk, other.oldC_ijk + numStates * numStates * numStates, oldC_ijk);
             std::copy(other.eigenvalue, other.eigenvalue + numStates, eigenvalue);
             std::copy(other.oldEigenvalue, other.oldEigenvalue + numStates, oldEigenvalue);
-            std::copy(other.diagLeftMatrix, other.diagLeftMatrix + numStates * numStates, diagLeftMatrix);
-            std::copy(other.oldDiagLeftMatrix, other.oldDiagLeftMatrix + numStates * numStates, oldDiagLeftMatrix);
-            std::copy(other.diagRightMatrix, other.diagRightMatrix + numStates * numStates, diagRightMatrix);
-            std::copy(other.oldDiagRightMatrix, other.diagLeftMatrix + numStates * numStates, diagRightMatrix);
         }
         return *this;
     }
@@ -96,10 +88,10 @@ struct RateEigen {
     delete [] eigenvalue;
     delete [] oldEigenvalue;
     delete [] oldC_ijk;
-    delete [] diagLeftMatrix;
-    delete [] oldDiagLeftMatrix;
-    delete [] diagRightMatrix;
-    delete [] oldDiagRightMatrix;
+    delete diagLeftMatrix;
+    delete diagRightMatrix;
+    delete oldDiagLeftMatrix;
+    delete oldDiagRightMatrix;
     }
 };
 
@@ -110,10 +102,10 @@ struct ComplexRateEigen {
     std::complex<double>* oldCeigenvalue;
 
     // johndu addition to support gammaDist model
-    std::complex<double>* cDiagLeftMatrix;
-    std::complex<double>* cDiagRightMatrix;
-    std::complex<double>* oldCDiagLeftMatrix;
-    std::complex<double>* oldCDiagRightMatrix;
+    Matrix<std::complex<double>>* cDiagLeftMatrix;
+    Matrix<std::complex<double>>* cDiagRightMatrix;
+    Matrix<std::complex<double>>* oldCDiagLeftMatrix;
+    Matrix<std::complex<double>>* oldCDiagRightMatrix;
     int numStates;
 
     ComplexRateEigen(int nS) : numStates(nS) {
@@ -121,19 +113,15 @@ struct ComplexRateEigen {
         ceigenvalue = new std::complex<double>[numStates];
         oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
         oldCeigenvalue = new std::complex<double>[numStates];
-        cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-        cDiagRightMatrix = new std::complex<double>[numStates * numStates];
-        oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-        oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
+        cDiagLeftMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        cDiagRightMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        oldCDiagLeftMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        oldCDiagRightMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
 
         std::fill(cc_ijk, cc_ijk + numStates * numStates * numStates, 0.0);
         std::fill(oldCC_ijk, oldCC_ijk + numStates * numStates * numStates, 0.0);
         std::fill(ceigenvalue, ceigenvalue + numStates, 0.0);
-        std::fill(oldCeigenvalue, oldCeigenvalue + numStates, 0.0);  
-        std::fill(cDiagLeftMatrix, cDiagLeftMatrix + numStates * numStates, 0.0);
-        std::fill(cDiagRightMatrix, cDiagRightMatrix + numStates * numStates, 0.0);
-        std::fill(oldCDiagLeftMatrix, oldCDiagLeftMatrix + numStates * numStates, 0.0);
-        std::fill(oldCDiagRightMatrix, oldCDiagRightMatrix + numStates * numStates, 0.0);
+        std::fill(oldCeigenvalue, oldCeigenvalue + numStates, 0.0); 
     }
 
 
@@ -143,19 +131,20 @@ struct ComplexRateEigen {
         ceigenvalue = new std::complex<double>[numStates];
         oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
         oldCeigenvalue = new std::complex<double>[numStates];
-        cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-        cDiagRightMatrix = new std::complex<double>[numStates * numStates];
-        oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-        oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
+        cDiagLeftMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        cDiagRightMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        oldCDiagLeftMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
+        oldCDiagRightMatrix = new Matrix<std::complex<double>>(numStates, numStates, 0.0);
         
         std::copy(other.cc_ijk, other.cc_ijk + numStates * numStates * numStates, cc_ijk);
         std::copy(other.oldCC_ijk, other.oldCC_ijk + numStates * numStates * numStates, oldCC_ijk);
         std::copy(other.ceigenvalue, other.ceigenvalue + numStates, ceigenvalue);
         std::copy(other.oldCeigenvalue, other.oldCeigenvalue + numStates, oldCeigenvalue);
-        std::copy(other.cDiagLeftMatrix, other.cDiagLeftMatrix + numStates * numStates, cDiagLeftMatrix);
-        std::copy(other.cDiagRightMatrix, other.cDiagRightMatrix + numStates * numStates, cDiagRightMatrix);
-        std::copy(other.oldCDiagLeftMatrix, other.oldCDiagLeftMatrix + numStates * numStates, oldCDiagLeftMatrix);
-        std::copy(other.oldCDiagRightMatrix, other.oldCDiagRightMatrix + numStates * numStates, oldCDiagRightMatrix);
+
+        cDiagLeftMatrix->inject(*(other.cDiagLeftMatrix));
+        oldCDiagLeftMatrix->inject(*(other.oldCDiagLeftMatrix));
+        cDiagRightMatrix->inject(*(other.cDiagRightMatrix));
+        oldCDiagRightMatrix->inject(*(other.oldCDiagRightMatrix));
     }
 
     ComplexRateEigen& operator=(const ComplexRateEigen& other) {
@@ -164,29 +153,25 @@ struct ComplexRateEigen {
             delete [] ceigenvalue;
             delete [] oldCC_ijk;
             delete [] oldCeigenvalue;
-            delete [] cDiagLeftMatrix;
-            delete [] cDiagRightMatrix;
-            delete [] oldCDiagLeftMatrix;
-            delete [] oldCDiagRightMatrix;
+            delete cDiagLeftMatrix;
+            delete cDiagRightMatrix;
+            delete oldCDiagLeftMatrix;
+            delete oldCDiagRightMatrix;
 
             numStates = other.numStates;
             cc_ijk = new std::complex<double>[numStates * numStates * numStates];
             ceigenvalue = new std::complex<double>[numStates];
             oldCC_ijk = new std::complex<double>[numStates * numStates * numStates];
             oldCeigenvalue = new std::complex<double>[numStates];
-            cDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-            cDiagRightMatrix = new std::complex<double>[numStates * numStates];
-            oldCDiagLeftMatrix = new std::complex<double>[numStates * numStates];
-            oldCDiagRightMatrix = new std::complex<double>[numStates * numStates];
+            cDiagLeftMatrix->inject(*(other.cDiagLeftMatrix));
+            cDiagRightMatrix->inject(*(other.cDiagRightMatrix));
+            oldCDiagLeftMatrix->inject(*(other.oldCDiagLeftMatrix));
+            oldCDiagRightMatrix->inject(*(other.oldCDiagRightMatrix));
 
             std::copy(other.cc_ijk, other.cc_ijk + numStates * numStates * numStates, cc_ijk);
             std::copy(other.oldCC_ijk, other.oldCC_ijk + numStates * numStates * numStates, oldCC_ijk);
             std::copy(other.ceigenvalue, other.ceigenvalue + numStates, ceigenvalue);
             std::copy(other.oldCeigenvalue, other.oldCeigenvalue + numStates, oldCeigenvalue);
-            std::copy(other.cDiagLeftMatrix, other.cDiagLeftMatrix + numStates * numStates, cDiagLeftMatrix);
-            std::copy(other.cDiagRightMatrix, other.cDiagRightMatrix + numStates * numStates, cDiagRightMatrix);
-            std::copy(other.oldCDiagLeftMatrix, other.oldCDiagLeftMatrix + numStates * numStates, oldCDiagLeftMatrix);
-            std::copy(other.oldCDiagRightMatrix, other.oldCDiagRightMatrix + numStates * numStates, oldCDiagRightMatrix);
         }
         return *this;
     }
@@ -196,10 +181,10 @@ struct ComplexRateEigen {
     delete [] ceigenvalue;
     delete [] oldCC_ijk;
     delete [] oldCeigenvalue;
-    delete [] cDiagLeftMatrix;
-    delete [] cDiagRightMatrix;
-    delete [] oldCDiagLeftMatrix;
-    delete [] oldCDiagRightMatrix;
+    delete cDiagLeftMatrix;
+    delete cDiagRightMatrix;
+    delete oldCDiagLeftMatrix;
+    delete oldCDiagRightMatrix;
     }
 };
 

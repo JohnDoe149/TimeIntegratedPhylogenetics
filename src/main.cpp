@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     for(Node* n : poSeq){
         int nIndex = n->getIndex();
         if(n != treeObject->getRoot()) {
-            n->setNeedsTPUpdate(true);
+            n->setNeedsTPUpdate(true); 
             std::vector<double> gammaVec = treeObject->getGammaParams(n);
 
             // inside the setProbs method, we will be able to see the transition matrix p0

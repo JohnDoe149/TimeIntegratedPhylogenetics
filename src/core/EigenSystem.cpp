@@ -4,9 +4,6 @@
 #include <complex>
 #include <vector>
 
-
-
-
 /* The constructor allocates space for the eigensystem, calculates it from
    the input matrix, and then stores it so that the components can be
    retrieved when needed. This constructor returns an empty Eigensystem
@@ -350,7 +347,6 @@ void EigenSystem::elmhes(int low, int high, Matrix<double>& a, std::vector<int>&
 
 /* This function copies the Hessenberg matrix stored in 'a' to 'h'. */
 void EigenSystem::elmtrans(int low, int high, Matrix<double> &a, std::vector<int> &perm, Matrix<double> &h) {
-	
 	for (int i=0; i<n; i++)
 		{
 		for (int k=0; k<n; k++) 
@@ -1064,12 +1060,15 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	elmhes(low, high, A, cnt);
 	
 	// initialize the eigenvectors
+	// johncom: for functional purposes, it just seems to efficiently copy the hessenberg matrix A to eigenvectors
 	elmtrans(low, high, A, cnt, eigenVectors);
 	
 	// compute eigenvalues and eigenvectors
 	hqr2(low, high, A, realEigenValues, imaginaryEigenValues, eigenVectors);
 	
 	// reverse balancing to obtain eigenvectors
+	// johncom: earlier we scaled all rows to be between 0 and 1 for computation, this does not affect the eigenvalues
+	// but certainly changes the eigenvectors, rescale to get the eigenvectors with respect to the original matrix
 	balback(low, high, scale, eigenVectors);
 
 	// checks whether there are complex eigenvalues
@@ -1085,10 +1084,17 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	if (isComplex == false) {
 		A.inject(eigenVectors);
 		invertMatrix(A, inverseEigenVectors);
+
+		// johncom: now modify rateEigen's to hold the eigenvalues and eigenvectors we found
 		for(int i = 0; i < n; i++){
 			eigens.eigenvalue[i] = realEigenValues[i];
 		}
 
+		// A and inverseEigenVectors are the left and right hand side of the diagonalized form respectively
+		eigens.diagLeftMatrix;
+		eigens.diagRightMatrix;
+
+		// this is not as relevant to me right now; it is a legacy artifact
 		double* pc = eigens.c_ijk;
 		for (int i=0; i<n; i++)
 			for (int j=0; j<n; j++)

@@ -1050,7 +1050,7 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	if (A.dim1() != n || A.dim2() != n)
 		return (1);
 	
-	// balance the n X n matrix
+	// balance the n X n matrix 
 	int low = 0, high = 0;
 	std::vector<double> scale(n);
 	balance(A, scale, &low, &high);
@@ -1138,7 +1138,12 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 				}
 			complexEigens.ceigenvalue[i] = complexNum(realEigenValues[i], imaginaryEigenValues[i]);
         }
+
+		// johnaddition, inject the complex matrices
+		complexEigens.cDiagLeftMatrix->inject(complexEigenVectors);
 		invertComplexMatrix(complexEigenVectors, complexInverseEigenVectors);
+		complexEigens.cDiagRightMatrix->inject(complexInverseEigenVectors);
+
 
 		std::complex<double>* pc = complexEigens.cc_ijk;
 		for (int i=0; i<n; i++)

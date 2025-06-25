@@ -93,16 +93,25 @@ template <class T> bool        operator!=(const Matrix<T> &A, const Matrix<T> &B
 
 // Definitions of inlined member functions
 
-// a simple print function to print out all elements row by row
+/* This method prints out the calling Matrix<T> in a clean way. Mainly used to easily see the elements of a Matrix<T> 
+   and to debug. NOTE: This method assumes that the Matrix element data type is either double or complex.*/
 template <class T>
 void Matrix<T>::print() const {
 	for(int row = 0; row < m; row++){
 		for(int col = 0; col < n; col++){
-			double num = v[row * n + col];
-			if(num < 0){
-				std::cout << std::fixed << std::setprecision(4) << v[row * n + col] << " ";
-			} else {
-				std::cout << std::fixed << std::setprecision(5) << v[row * n + col] << " ";
+			// print tool for matrix
+			if(std::is_same_v<T, std::complex<double>>){
+				std::complex<double> num = v[row * n + col];
+				double real = num.real();
+				double imag = num.imag();
+				int realPrecis = (real < 0) ? 2 : 3;
+				int imagPrecis = (imag < 0) ? 2 : 3;
+				std::cout << std::fixed << std::setprecision(4) << real << "+" << imag << "i ";
+			}
+			else if (std::is_same_v<T, double>){
+				double num = v[row * n + col];
+				int precis = (num < 0) ? 4 : 5;
+				std::cout << std::fixed << std::setprecision(precis) << num << " ";
 			}
 		}
 		std::cout << "\n";

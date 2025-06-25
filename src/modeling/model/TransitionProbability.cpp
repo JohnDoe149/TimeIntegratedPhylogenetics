@@ -91,30 +91,47 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	// get the eigenvalues and eigenvectors
 	Matrix<double> eigenDecompTemp(temp.copy());
 	isComplex[0] = eigens->update(eigenDecompTemp, rateEigen[0], complexRateEigen[0]);
-	RateEigen newEigenVectors = rateEigen[0];
-	Matrix<double> *leftMatrix = newEigenVectors.diagLeftMatrix;
-	Matrix<double> *rightMatrix = newEigenVectors.diagRightMatrix;
-	std::cout << "rightmatrix postdecomposition: \n";
-	rightMatrix->print();
-	std::cout << "left matrix postdecomposition: \n";
-	leftMatrix->print();
-	double* eigenvalues = newEigenVectors.eigenvalue;
-	std::cout << "eigenvalues: \n";
-	std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;
+	
+	// now split here depending on whether or not we have complex eigenvalues
+	if(!isComplex[0]){
+		RateEigen newDiag = rateEigen[0];
+		Matrix<double> *leftMatrix = newDiag.diagLeftMatrix;
+		Matrix<double> *rightMatrix = newDiag.diagRightMatrix;
+		std::cout << "rightmatrix postdecomposition: \n";
+		rightMatrix->print();
+		std::cout << "left matrix postdecomposition: \n";
+		leftMatrix->print();
+		double* eigenvalues = newDiag.eigenvalue;
+		std::cout << "eigenvalues: \n";
+		std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;
 
-	// take the eigenvalues to the power of -(shape|alpha) to mimic A^-x = P * D^-x * P^-1 as part of taking the matrix to the
-	// -(shape|alpha) power to get our diagonal matrix
-	Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
-	for(int i = 0; i < Q.dim1(); i++){
-		diagonalMatrix(i, i) = pow(eigenvalues[i], -1 * shape);
-	}
-	std::cout << "diagonal matrix: \n";
-	diagonalMatrix.print();
+		// take the eigenvalues to the power of -(shape|alpha) to mimic A^-x = P * D^-x * P^-1 as part of taking the matrix to the
+		// -(shape|alpha) power to get our diagonal matrix
+		Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
+		for(int i = 0; i < Q.dim1(); i++){
+			diagonalMatrix(i, i) = pow(eigenvalues[i], -1 * shape);
+		}
+		std::cout << "diagonal matrix: \n";
+		diagonalMatrix.print();
 
-	// now get transitionProbability matrix by using the property A = P*D*P^-1
-	P0 = ((*leftMatrix) * diagonalMatrix)*(*rightMatrix); 
-	std::cout << "transition probability matrix: \n";
-	P0.print();
+		// now get transitionProbability matrix by using the property A = P*D*P^-1
+		P0 = ((*leftMatrix) * diagonalMatrix)*(*rightMatrix); 
+		std::cout << "transition probability matrix: \n";
+		P0.print();
+	} else {
+		ComplexRateEigen newDiag = complexRateEigen[0];
+		Matrix<std::complex<double>> *leftMatrix = newDiag.cDiagLeftMatrix;
+		std::cout << "complex left matrix postdecomposition: \n";
+		leftMatrix->print();		
+		Matrix<std::complex<double>> *rightMatrix = newDiag.cDiagRightMatrix;
+		std::cout << "complex rightmatrix postdecomposition: \n";
+		rightMatrix->print();
+		std::complex<double> *cEigenvalues = newDiag.ceigenvalue;
+		std::cout << "complex eigenvalues: \n";
+		std::cout << cEigenvalues[0].real() << "+" << cEigenvalues[0].imag() << "i " << cEigenvalues[1].real() << "+" << cEigenvalues[1].imag() << "i " 
+				  << cEigenvalues[2].real() << "+" << cEigenvalues[2].imag() << "i " << cEigenvalues[3].real() << "+" << cEigenvalues[3].imag() << "i "<< "\n" << std::flush;
+
+	} 
 }
 void TransitionProbability::updateQ(Matrix<double> otherQ){
 	Q = otherQ;

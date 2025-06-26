@@ -14,10 +14,10 @@ RateMatrix::RateMatrix(Settings settings) :
 
     #ifdef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance(100);
-    #endif TEST
+    #endif 
     #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    #endif TEST
+    #endif 
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             if(i != j)
@@ -139,7 +139,7 @@ Matrix<double> RateMatrix::Q() {
             if(j != i){
                 #ifdef TEST
                 returnMatrix(i,j) = currentStationary[j] * returnMatrix(i,j);
-                #endif TEST
+                #endif
                 total += returnMatrix(i , j);
             } 
             // returnMatrix.print();

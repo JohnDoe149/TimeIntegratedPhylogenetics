@@ -1094,12 +1094,6 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 		eigens.diagLeftMatrix->inject(eigenVectors);
 		eigens.diagRightMatrix->inject(inverseEigenVectors);
 
-		// this is not as relevant to me right now; it is a legacy artifact
-		double* pc = eigens.c_ijk;
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				for (int k=0; k<n; k++)
-					*(pc++) = eigenVectors(i, k) * inverseEigenVectors(k, j);
     }
 	else {
 		Matrix<complexNum> complexEigenVectors(n,n);
@@ -1139,17 +1133,9 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 			complexEigens.ceigenvalue[i] = complexNum(realEigenValues[i], imaginaryEigenValues[i]);
         }
 
-		// johnaddition, inject the complex matrices
 		complexEigens.cDiagLeftMatrix->inject(complexEigenVectors);
 		invertComplexMatrix(complexEigenVectors, complexInverseEigenVectors);
 		complexEigens.cDiagRightMatrix->inject(complexInverseEigenVectors);
-
-
-		std::complex<double>* pc = complexEigens.cc_ijk;
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				for (int k=0; k<n; k++)
-					*(pc++) = complexEigenVectors(i, k) * complexInverseEigenVectors(k, j);
     }
 
 	return isComplex;

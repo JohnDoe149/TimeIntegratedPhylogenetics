@@ -5,6 +5,7 @@
 #include <iomanip> 
 #include <cstdlib> 
 #include <cstring>
+#include <complex>
  
 // We need to forward declare some stuff
 template <class T>
@@ -99,14 +100,16 @@ template <class T>
 void Matrix<T>::print() const {
 	for(int row = 0; row < m; row++){
 		for(int col = 0; col < n; col++){
-			// print tool for matrix
-			if(std::is_same_v<T, std::complex<double>>){
+			
+			// use constexpr to push logic to compiletime
+			if constexpr (std::is_same_v<T, std::complex<double>>){
 				std::complex<double> num = v[row * n + col];
 				double real = num.real();
 				double imag = num.imag();
 				int realPrecis = (real < 0) ? 2 : 3;
-				int imagPrecis = (imag < 0) ? 2 : 3;
-				std::cout << std::fixed << std::setprecision(4) << real << "+" << imag << "i ";
+				// int imagPrecis = (imag < 0) ? 2 : 3;
+				// std::cout << std::fixed << std::setprecision(realPrecis) << real << "+" << std::fixed << std::setprecision(3) << imag << "i ";
+				std::cout << num;
 			}
 			else if (std::is_same_v<T, double>){
 				double num = v[row * n + col];

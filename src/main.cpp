@@ -53,54 +53,53 @@ int main(int argc, char* argv[]) {
     TreeObject *treeObject = treeParam.getTree();
     TransitionProbability *transProb = new TransitionProbability(treeObject->getNumNodes());
 
-   
-
-    // hijack the Q update with a matrix that is guranteed to be complex
-
-    Matrix<double> Q(4,4,0.0);
-    Q(0,1) = -1;
-    Q(1,0) = 1;
-    Q(2,2) = 2;
-    Q(2,3) = -3;
-    Q(3,2) = 3;
-    Q(3,3) = 2;
-    Q.print();
-    transProb->updateQ(Q);
-    const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
-    for(Node* n : poSeq){
-        int nIndex = n->getIndex();
-        if(n != treeObject->getRoot()) {
-            n->setNeedsTPUpdate(true); 
-            std::vector<double> gammaVec = treeObject->getGammaParams(n);
-
-            // inside the setProbs method, we will be able to see the transition matrix p0
-            transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
-        }
-        n->setNeedsTPUpdate(false);
-        break;
-    }
-
-     // force updates to stationary and rate matrix
+    // // hijack the Q update with a matrix that is guaranteed to be complex
+    // Matrix<double> Q(4,4,0.0);
+    // Q(0,1) = -1;
+    // Q(1,0) = 1;
+    // Q(2,2) = 2;
+    // Q(2,3) = -3;
+    // Q(3,2) = 3;
+    // Q(3,3) = 2;
+    // Q.print();
+    // transProb->updateQ(Q);
     // const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
-    // for(int i = 0; i < 30; i ++){
-    //     rateMatrix.updateRates();
-    //     rateMatrix.accept();
-    //     rateMatrix.updateStationary();
-    //     rateMatrix.accept();
-    //     Matrix<double> Q = rateMatrix.Q();
-    //     transProb->updateQ(Q);
-    //     for(Node* n : poSeq){
-    //         int nIndex = n->getIndex();
-    //         if(n != treeObject->getRoot()) {
-    //             n->setNeedsTPUpdate(true); 
-    //             std::vector<double> gammaVec = treeObject->getGammaParams(n);
+    // for(Node* n : poSeq){
+    //     int nIndex = n->getIndex();
+    //     if(n != treeObject->getRoot()) {
+    //         n->setNeedsTPUpdate(true); 
+    //         std::vector<double> gammaVec = treeObject->getGammaParams(n);
 
-    //             // inside the setProbs method, we will be able to see the transition matrix p0
-    //             transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
-    //         }
-    //         n->setNeedsTPUpdate(false);
-    //         break;
+    //         // inside the setProbs method, we will be able to see the transition matrix p0
+    //         transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
     //     }
+    //     n->setNeedsTPUpdate(false);
+    //     break;
     // }
+
+    //force updates to stationary and rate matrix
+    const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
+    for(int i = 0; i < 30; i ++){
+        Matrix<double> Q(4,4, 1);
+        for(int i = 0; i < 4; i++){
+            Q(i,i) = -3;
+        }
+        for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+                Q(i,j) /= 12;
+            }
+        }
+        transProb->updateQ(Q);
+        for(Node* n : poSeq){
+            int nIndex = n->getIndex();
+            if(n != treeObject->getRoot()) {
+                n->setNeedsTPUpdate(true); 
+                std::vector<double> gammaVec = treeObject->getGammaParams(n);
+                transProb->setProbs(0, 0, nIndex, 0.5, 10);
+            }
+            n->setNeedsTPUpdate(false);
+            break;
+        }
+    }
 }
 #endif

@@ -137,9 +137,7 @@ Matrix<double> RateMatrix::Q() {
             // returnMatrix.print();
             // std::cout << "break \n";
             if(j != i){
-                #ifdef TEST
                 returnMatrix(i,j) = currentStationary[j] * returnMatrix(i,j);
-                #endif
                 total += returnMatrix(i , j);
             } 
             // returnMatrix.print();

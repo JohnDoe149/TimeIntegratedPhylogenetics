@@ -3,6 +3,7 @@
 #include "core/RateEigens.hpp"
 #include "core/Math.hpp"
 #include <cstring>
+#include "test.h"
 
 TransitionProbability::TransitionProbability(const int nn)
     : numStates(4), numNodes(nn), probs1(), probs2() {
@@ -97,7 +98,12 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	// next perform a scalar multiplication by 1/scale and then subtract the transformed matrix from the identity matrix (I-A)
 	transformMatrix *= 1/scale;
 	for(int i = 0; i < transformMatrix.dim1(); i++){
-		transformMatrix(i,i) = 1 - transformMatrix(i,i);
+		for(int j = 0; j < transformMatrix.dim2(); j++){
+			transformMatrix(i,j) = -1 * transformMatrix(i,j);
+			if(i == j){
+				transformMatrix(i,j) = 1 + transformMatrix(i,j);
+			}
+		}
 	}
 
 	#ifdef TRANSPROB_PRINT
@@ -128,16 +134,38 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		// -(shape|alpha) power to get our diagonal matrix
 		Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
 		for(int i = 0; i < Q.dim1(); i++){
-			diagonalMatrix(i, i) = pow(eigenvalues[i], -1 * shape);
+			diagonalMatrix(i, i) = eigenvalues[i];
+		}
+		std::cout << "diagonal matrix \n";
+		diagonalMatrix.print();
+
+		std::cout << "verify correct diagonalization \n";
+		Matrix<double> verifyMatrix = (((*leftMatrix) * diagonalMatrix)*(*rightMatrix));  
+		verifyMatrix.print();
+
+		for(int i = 0; i < Q.dim1(); i++){
+			diagonalMatrix(i, i) = std::exp(-shape * std::log(eigenvalues[i]));
 		}
 
 		#ifdef TRANSPROB_PRINT
-		std::cout << "diagonal matrix: \n";
+		std::cout << "diagonal matrix taken to the power: \n";
 		diagonalMatrix.print();
 		#endif
 
 		// now get transitionProbability matrix by using the property A = P*D*P^-1
-		P0 = ((*leftMatrix) * diagonalMatrix)*(*rightMatrix); 
+		Matrix<double> newMatrix = ((*leftMatrix) * diagonalMatrix);
+		std::cout << "P * D\n";
+		newMatrix.print();
+		Matrix<double> finalMatrix = newMatrix * (*rightMatrix);
+		std::cout << "PD * P^-1\n";
+		finalMatrix.print();
+		
+		for(int i = 0; i < Q.dim1(); i++){
+			for(int j = 0; j < Q.dim2(); j++){
+				P0(i,j) = finalMatrix(i, j); 
+			}
+		}
+
 		
 		#ifdef TRANSPROB_PRINT
 		std::cout << "transition probability matrix: \n";
@@ -167,19 +195,21 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		
 		// now that the transition probability matrix has been calculated, because a matrix of real numbers ^ real positive numbers
 		// is still a matrix of real numbers, so we can safely discard the imaginary components of the transition probability
-		Matrix<std::complex<double>> newMatrix = ((*leftMatrix) * diagonalMatrix)*(*rightMatrix); 
+		Matrix<std::complex<double>> newMatrix = (( (*leftMatrix) * diagonalMatrix)*(*rightMatrix));  
 		for(int i = 0; i < Q.dim1(); i++){
 			for(int j = 0; j < Q.dim2(); j++){
 				P0(i,j) = newMatrix(i, j).real(); 
 			}
 		}
 
-		#ifdef TRANSPROB_PRINT
+		#ifndef TRANSPROB_PRINT
 		std::cout << "transition probability matrix: \n";
 		P0.print();
 		#endif
 	} 
 }
+
+// a simple method to update the rateMatrix Q
 void TransitionProbability::updateQ(Matrix<double> otherQ){
 	Q = otherQ;
 }

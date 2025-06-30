@@ -125,12 +125,10 @@ void Model::regenerateLikelihood(){
         int nIndex = n->getIndex();
         if(n->getNeedsTPUpdate() == true){
             if(n != activeT->getRoot()) {
-
-                // FIX THIS
                 std::vector<double> gammaVec = activeT->getGammaParams(n);
                 activeTP[nIndex] ^= true;
                 bool activeIndex = activeTP[nIndex];
-                transProb->setProbs(activeIndex, 0, nIndex, gammaVec[0], gammaVec[1]);// I will need to change how the transition probability is calculated
+                transProb->setProbs(activeIndex, 0, nIndex, gammaVec[0], gammaVec[1]);
             }
             n->setNeedsTPUpdate(false);
         }
@@ -170,6 +168,10 @@ void Model::regenerateLikelihood(){
                             double* pD = (*postOrder)(dIndex, activeCL[dIndex], 0) + start * stateSpace;
                             
                             const Matrix<double>& P = (*transProb)(activeTP[dIndex], 0, dIndex);
+
+                            // std::cout << "printing out node " << d->getIndex() << "'s ancestor's branch transprob\n" << std::flush;
+                            // P.print();
+
                             for(int c = 0; c < currentChunkSize; c++){
                                 for(int i = 0; i < stateSpace; i++){
                                     double sum = 0.0;

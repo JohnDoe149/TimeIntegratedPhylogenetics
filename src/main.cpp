@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
     Mcmc myMCMC(&model, &treeParam, &rateMatrix, settings);
 
     std::cout << "Starting MCMC..." << std::endl;
-    >> bug here
-    // myMCMC.burnin();
-    // myMCMC.run();
+
+    myMCMC.burnin();
+    myMCMC.run();
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << treeParam.writeNewick() << "\n" << std::flush;

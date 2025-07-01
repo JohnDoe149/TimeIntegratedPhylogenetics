@@ -57,13 +57,13 @@ void TransitionProbability::reject(void) {
 	for(int i = 0; i < isOldComplex.size(); i++){
 		if(!isComplex[i]){
 			memcpy(rateEigen[i].eigenvalue, rateEigen[i].oldEigenvalue, numStates*sizeof(double));
-			memcpy(rateEigen[i].diagLeftMatrix, rateEigen[i].oldDiagLeftMatrix, numStates*numStates*sizeof(double));
-			memcpy(rateEigen[i].diagRightMatrix, rateEigen[i].oldDiagRightMatrix, numStates*numStates*sizeof(double));
+            rateEigen[i].diagLeftMatrix->inject(*rateEigen[i].oldDiagLeftMatrix);
+            rateEigen[i].diagRightMatrix->inject(*rateEigen[i].oldDiagRightMatrix);
 		}
 		else {
 			memcpy(complexRateEigen[i].ceigenvalue, complexRateEigen[i].oldCeigenvalue, numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].cDiagLeftMatrix, complexRateEigen[i].oldCDiagLeftMatrix, numStates*numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].cDiagRightMatrix, complexRateEigen[i].oldCDiagRightMatrix, numStates*numStates*sizeof(std::complex<double>));
+            complexRateEigen[i].cDiagLeftMatrix->inject(*complexRateEigen[i].oldCDiagLeftMatrix);
+            complexRateEigen[i].cDiagRightMatrix->inject(*complexRateEigen[i].oldCDiagRightMatrix);
 		}
 	}
 }

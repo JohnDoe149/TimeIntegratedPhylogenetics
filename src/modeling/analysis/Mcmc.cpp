@@ -8,6 +8,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include "test.h"
 
 Mcmc::Mcmc(Model* m, TreeParameter* t, RateMatrix* rm, Settings& s) : 
     model(m), rateMatrix(rm), tree(t) { 
@@ -48,6 +49,9 @@ void Mcmc::burnin(){
 
             // pick between topology or branch update
             int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
+            #ifdef FIXED_TOPOLOGY
+            coinFlip = 1;
+            #endif
             if(coinFlip){
                 updater = [this]() { return tree->updateTreeGamma(); };
             } else{

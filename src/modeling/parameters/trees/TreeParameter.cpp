@@ -8,45 +8,44 @@
 #include <test.h>
 
 TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
-                                                         moveChoice(-1), branchCount(0), branchAcceptCount(0), 
-                                                         treeCount(0), treeAcceptCount(0), gammaDelta(1.1) {
-    fixedTree = newick != ""; // fixedTree is true if newick is not empty and false otherwise   
-    if(!fixedTree) // if newick is an empty string
-        trees[0] = new TreeObject(aln);
-    // else // if newick is not empty this
-    //     trees[0] = new TreeObject(newick, aln->getTaxaNames());
+                                                         moveChoice(-1), rateCount(0), rateAcceptCount(0), rateDelta(0.5), shapeCount(0),
+                                                         shapeAcceptCount(0), shapeDelta(0.5){
 
-    // if not a fixed tree, meaning the topology
-    if(!fixedTree){
-        #ifdef TEST
-        RandomVariable& rng = RandomVariable::randomVariableInstance(100);
-        #endif
-        #ifndef TEST
-        RandomVariable& rng = RandomVariable::randomVariableInstance();
-        #endif
-        std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
-        for(Node* n : nodes) {
-            if(n != trees[0]->getRoot()) {
+    // first make a new tree based on aln
+    trees[0] = new TreeObject(aln);
+    #ifdef TEST
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    #endif
+    #ifndef TEST
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
+    #endif
 
-                // alpha and beta both have gamma priors
-                double alpha = Probability::Gamma::rv(&rng, 1, 1);
-                double beta = Probability::Gamma::rv(&rng, 1, 1);
-                trees[0]->setGammaDist(n, alpha, beta);
-            }
+    // Now go through each node and assign their ancestor branch random gamma parameters shape and rate.
+    // except the root as it has no ancestor branch
+    std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
+    for(Node* n : nodes) {
+        if(n != trees[0]->getRoot()) {
+
+            // alpha and beta both have gamma priors
+            double shape = Probability::Gamma::rv(&rng, 4, 10);
+            double rate = Probability::Gamma::rv(&rng, 4, 10);
+            trees[0]->setGammaDist(n, shape, rate);
         }
     }
 
+    // copy the tree to the tree vector in case we reject
     trees[1] = new TreeObject(*trees[0]);
 
-    // FIX THIS BY IMPLEMENTING THE NEW GAMMA LIKELIHOOD CALCULATION
-    // std::vector<double> values = trees[0]->getBranchLengths();
-    // double totalLength = 0.0;
-    // for(double val : values){
-    //     totalLength += val;
-    // }
-    // currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
-    // oldPrior = currentPrior;
-
+    // go through each node and calculate the probability of the gamma parameters and add them up 
+    // to use in the posterior calculation
+    double lnShape = 0.0;
+    double lnRate = 0.0;
+    std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
+    for(std::vector<double> gammaParam: allGammaParams){
+        lnShape += Probability::Gamma::lnPdf(4, 10, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(4, 10, gammaParam[1]);
+    }
+    currentPrior = lnShape + lnRate;
     dirty();
 
     #ifdef TEST
@@ -59,26 +58,32 @@ TreeParameter::~TreeParameter(){
     delete trees[1]; 
 }
 
+// This method is in the event the proposed tree gets accepted, copy the accepted tree (tree[0]) to trees[1]
+// for storage. Set currentPrior to oldPrior to store it. Also record what type of treeMove was made for the burn-in
 void TreeParameter::accept(){
     *trees[1] = *trees[0];
     oldPrior = currentPrior;
 
     if(moveChoice == 0){
-        branchAcceptCount += 1;
-    }
+        rateAcceptCount += 1;
+    } 
     else if(moveChoice == 1){
-        treeAcceptCount += 1;
+        shapeAcceptCount += 1;
     }
 
+    // reset moveChoice
     moveChoice = -1;
 }
 
+// In the event the proposed tree is rejected, copy the tree we stored in trees[1] to use for the next proposal
 void TreeParameter::reject(){
     *trees[0] = *trees[1];
     currentPrior = oldPrior;
     moveChoice = -1;
 }
 
+// This update randomly selects a node and then randomly selects either the shape or rate parameter of its
+// ancestor branch to update.
 double TreeParameter::updateTreeGamma(){
     #ifdef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance(12);
@@ -86,10 +91,6 @@ double TreeParameter::updateTreeGamma(){
     #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
     #endif
-    double hastings = 0.0;
-
-    moveChoice = 0;
-    branchCount += 1;
 
     // pick a random node that is not the root to update one of their ancestor branch's gamma parameters
     TreeObject* tree = trees[0];
@@ -100,19 +101,30 @@ double TreeParameter::updateTreeGamma(){
         randNode = nodes[(int)(rng.uniformRv() * nodes.size())];
     } while(randNode == treeRoot);
     
-    // flip a coin to determine which parameter to update (alpha if 1 or beta if 0)
+    // flip a coin to determine which parameter to update (shape if 1 or rate if 0)
     int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
-    std::vector<double> gammaParams = tree->getGammaParams(randNode);
-    double changeParam = gammaParams[coinFlip];
-    
-    // now do a simple rescaling proposal by drawing a multiplicative factor from a normal distribution
-    double scale = std::exp(gammaDelta * (rng.uniformRv() - 0.5));
-    gammaParams[coinFlip] = gammaParams[coinFlip] * scale;
-    tree->setGammaDist(randNode, gammaParams[0], gammaParams[1]);
-    hastings = std::log(scale);
+    double hastings;
 
-    // set flags for the changed node, changed alpha or beta means the TP changes and all nodes
-    // it "descended" from back to the root need to have their CL due felsenstein's algo
+    // record whether or not a shape or rate update is going to be made
+    if(coinFlip){
+        shapeCount += 1;
+        moveChoice = 1;
+        std::vector<double> gammaParams = tree->getGammaParams(randNode);
+        double scale = std::exp(shapeDelta * (rng.uniformRv() - 0.5));
+        tree->setGammaDist(randNode, gammaParams[0] * scale, gammaParams[1]);
+        hastings = std::log(scale);
+    } else{
+        rateCount += 1;
+        moveChoice = 0;
+        std::vector<double> gammaParams = tree->getGammaParams(randNode);
+        double scale = std::exp(rateDelta * (rng.uniformRv() - 0.5));
+        tree->setGammaDist(randNode, gammaParams[0], gammaParams[1] * scale);
+        hastings = std::log(scale);
+    }
+
+    // set flags for the changed node, a changed shape or rate means the transition probabilty changes and all nodes
+    // it "descended" from back to the root need to have their conditional likelihood recalculated
+    // due to how Felsenstein's algorithm is calculated (from descendant to ancestor)
     randNode->setNeedsTPUpdate(true);
     if(!randNode->getIsTip()){
         randNode->setNeedsCLUpdate(true);
@@ -126,10 +138,26 @@ double TreeParameter::updateTreeGamma(){
     tree->initPostOrder();
     this->dirty();
 
-    // currentPrior = ? // how to calculate currentPrior
+    // go through each node and calculate the probability of the gamma parameters and add them up
+    // to get our prior probability for the posterior calculation
+    double lnShape = 0.0;
+    double lnRate = 0.0;
+    std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
+    for(std::vector<double> gammaParam: allGammaParams){
+        lnShape += Probability::Gamma::lnPdf(4, 10, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(4, 10, gammaParam[1]);
+    }
+    currentPrior = lnShape + lnRate;
+
     return hastings;
 }
 
+// This tree update changes the topology of the tree via NNI (nearest neighbor interchange)
+// NNI implementation:
+// picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
+// and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
+// out an internal subtree with a subtree that diverged earlier
+// Does not change anything related to branch lengths, only how the nodes are arranged
 double TreeParameter::updateTreeMove() {
     #ifdef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance(12);
@@ -137,14 +165,8 @@ double TreeParameter::updateTreeMove() {
     #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
     #endif
-    double hastings = 0.0;
 
-    // NNI implementation
-    // picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
-    // and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
-    // out an internal subtree with a subtree that diverged earlier
-    moveChoice = 1; 
-    treeCount += 0;
+    double hastings;
     TreeObject* tree = trees[0];
     std::vector<Node*> nodes = tree->getPostOrderSeq();
     Node* root = tree->getRoot();
@@ -266,30 +288,38 @@ double TreeParameter::updateTreeMove() {
     return hastings;
 }
 
+// During the burn-in phase of MCMC we seek to tune how the rate and shape parameter proposals are made for all
+// nodes. The classic heurestic of aiming for an acceptance rate of ~0.33 is used. The topology itself can not be
+// tuned, just the branch lengths (rate and shape).
 void TreeParameter::tune() {
-    double rate1 = (double)branchAcceptCount/(double)branchCount;
 
-    if ( rate1 > 0.33 ) {
-        gammaDelta *= (1.0 + ((rate1-0.33)/0.67));
+    // Calculate the rate proposals acceptance rate, if its too high, make rateDelta larger to decrease acceptance
+    // otherwise make it smaller (more conservative proposals) to increase acceptance.
+    double rateRate = (double)rateAcceptCount/(double)rateCount;
+    if ( rateRate > 0.33 ) {
+        rateDelta *= (1.0 + ((rateRate-0.33)/0.67));
     }
     else {
-        gammaDelta /= (2.0 - rate1/0.33);
+        rateDelta /= (2.0 - rateRate/0.33);
     }
-    branchAcceptCount = 0;
-    branchCount = 0;
+    rateAcceptCount = 0;
+    rateCount = 0;
+    
+    // Update shapeDelta the same way rateDelta is updated
+    double shapeRate = (double)shapeAcceptCount/(double)shapeCount;
+    if ( shapeRate > 0.33 ) {
+        shapeDelta *= (1.0 + ((shapeRate-0.33)/0.67));
+    }
+    else {
+        shapeDelta /= (2.0 - shapeRate/0.33);
+    }
+    shapeAcceptCount = 0;
+    shapeCount = 0;
 
-    // double rate2 = (double)treeAcceptCount/(double)treeCount;
-
-    // if ( rate2 > 0.33 ) {
-    //     treeAlpha /= (1.0 + ((rate2-0.33)/0.67));
-    // }
-    // else {
-    //     treeAlpha *= (2.0 - rate2/0.33);
-    // }
-    // treeAcceptCount = 0;
-    // treeCount = 0;
+    std::cout << "rateRate: " << rateRate << " shapeRate: " << shapeRate << "\n";
 }
 
+// A simple "getter" method to get the prior for a tree proposal 
 double TreeParameter::lnPrior() {
     return currentPrior;
 }

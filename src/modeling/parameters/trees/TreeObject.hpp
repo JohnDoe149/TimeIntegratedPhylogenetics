@@ -28,7 +28,8 @@ class TreeObject {
         std::map<Node*, std::vector<double>> getGammaMap();
         std::vector<std::vector<double>> getGammas();
         void                setGammaDist(Node* n, double alpha, double beta);
-
+        Node*               getNodeWithIndex(int index);
+        int                 getNumOfNodes(){return nodes.size();}
         std::string         getNewick() const;
         int                 getNumTaxa(){return numTaxa;}
         int                 getNumNodes(){return nodes.size();}
@@ -46,8 +47,7 @@ class TreeObject {
     private:
         Node*               addNode(void);
 
-        // EVIL BRANCH LENGTH MAP
-        // the double vector will have 2 (hahaha) double values, first represents alpha, second represents beta
+        // the double vector will have 2 (hahaha) double values, first represents alpha (shape), second represents beta (rate)
         std::map<Node*, std::vector<double>> branchGamma;
 
         void                clone(const TreeObject& t);

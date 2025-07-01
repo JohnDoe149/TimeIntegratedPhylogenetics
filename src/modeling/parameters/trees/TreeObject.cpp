@@ -96,88 +96,6 @@ TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
     }
 }
 
-// I am not going to think about starting alignments for now
-// //Change to match index to taxon name
-// TreeObject::TreeObject(std::string newick, std::vector<std::string> taxaNames){
-//     std::vector<std::string> tokens = parseNewickString(newick);
-
-//     Node* p = nullptr;
-//     bool readingBranchLength = false;
-
-//     numTaxa = 0;
-
-//     for(std::string tok : tokens){
-//         if(tok == "("){
-//             Node* newNode = addNode();
-//             if(p == nullptr)
-//                 root = newNode;
-//             else{
-//                 p->addNeighbor(newNode);
-//                 newNode->addNeighbor(p);
-//                 newNode->setAncestor(p);
-//                 setGammaDist(newNode, 0.0, 0.0);
-//             }
-
-//             p = newNode;
-//         }
-//         else if(tok == ")" || tok == ","){
-//             if(p->getAncestor() != nullptr)
-//                 p = p->getAncestor();
-//             else
-//                 Msg::error("Poorly formatted Newick! -P should not be null.");
-//         }
-//         else if(tok == ":"){
-//             readingBranchLength = true;
-//         }
-//         else if(tok == ";"){
-//             if(p != root)
-//                 Msg::error("Poorly formatted Newick! Did not end at root.");
-//         }
-//         else{
-//             if(readingBranchLength){
-//                 double x = atof(tok.c_str());
-//                 setBranchLength(p, x);
-//             }
-//             else{
-//                 //We need to trim the white space at the beginning and end of the token
-//                 while(tok[0] == ' ')
-//                     tok.erase(0,1);
-//                 while(tok[tok.size()-1] == ' ')
-//                     tok.erase(tok.size()-1);
-
-
-//                 Node* newNode = addNode();
-//                 p->addNeighbor(newNode);
-//                 newNode->addNeighbor(p);
-//                 newNode->setAncestor(p);
-//                 newNode->setName(tok);
-//                 newNode->setIsTip(true);
-//                 setBranchLength(newNode, 0.0);
-
-//                 int taxonIndex = getTaxonIndex(tok, taxaNames);
-//                 if(taxonIndex == -1)
-//                     Msg::error("Token '" + tok + "' is not in taxa names");
-//                 newNode->setIndex(taxonIndex);
-
-//                 p = newNode;
-//                 numTaxa++;
-//             }
-//             readingBranchLength = false;
-//         }
-//     }
-//     initPostOrder();
-    
-//     if(numTaxa != taxaNames.size())
-//         Msg::error("Taxa names do not match the size of the newick string.");
-
-//     int idx = numTaxa;
-//     for(Node* n : postOrderSeq){
-//         if(n->getIsTip() == false){
-//             n->setIndex(idx++);
-//         }
-//     }
-// }
-
 TreeObject::TreeObject(const TreeObject& t){
     clone(t);
 }
@@ -236,8 +154,6 @@ void TreeObject::clone(const TreeObject& t){
 
         if(q->getAncestor() != nullptr){
             Node* ancestor = this->nodes[q->getAncestor()->getOffset()];
-
-            // FIX THIS LATER this may cause issues because of how I am copying over values
             std::vector<double> gp = t.getGammaParams(q);
             p->setAncestor(ancestor);
             this->setGammaDist(p, gp[0], gp[1]);
@@ -259,10 +175,10 @@ void TreeObject::deleteAllNodes(){
     nodes.clear();
 }
 
-void TreeObject::setGammaDist(Node* n, double alpha, double beta){
+void TreeObject::setGammaDist(Node* n, double shape, double rate){
     std::vector<double> gammaParams;
-    gammaParams.push_back(alpha);
-    gammaParams.push_back(beta);
+    gammaParams.push_back(shape);
+    gammaParams.push_back(rate);
     auto it = branchGamma.find(n);
 
     if(it == branchGamma.end())
@@ -429,7 +345,20 @@ void TreeObject::setNodeNameIndex(){
         Node* p = postOrderSeq[i];
         p->setName(std::to_string(p->getIndex()));
     }
+}
 
+/* This method exists to allow a way to quicky get a node via its index. Mainly created to create a traceplot for a given node
+   if the index is negative or greater than the number of nodes, this method returns null*/
+Node* TreeObject::getNodeWithIndex(int index) {
+    if(index < 0 || index > nodes.size()){
+        return nullptr;
+    }
+    for(Node* node :nodes){
+        if(node->getIndex() == index){
+            return node;
+        }
+    }
+    return nullptr;
 }
 
 //For outputting a newick string

@@ -254,6 +254,12 @@ std::string Model::tabularHeader(){
         returnString += "\tPi[" + std::to_string(i) + "]";
     }
 
+    // print out each node's shape and rate parameters (really each node's ancestor's branch)
+    TreeObject *currentTree = tree->getTree();
+    for(int index = 0; index < currentTree->getNumOfNodes() - 1; index++){
+        returnString +=  "\tnode" + std::to_string(index) +"shape\tnode" + std::to_string(index) + "rate"; 
+    }
+
     return returnString + "\n";
 }
 
@@ -265,6 +271,13 @@ std::string Model::tabularOut(int i){
         returnString += "\t" + std::to_string(i);
     }
 
+    // For each node, print out their gamma params shape and rate
+    TreeObject *currentTree = tree->getTree();
+    for(int index = 0; index < currentTree->getNumOfNodes()-1; index++){
+        Node *currentNode = currentTree->getNodeWithIndex(index);
+        std::vector<double> gammaParams = currentTree->getGammaParams(currentNode);
+        returnString += "\t" + std::to_string(gammaParams[0]) + "\t" + std::to_string(gammaParams[1]);
+    }
     return returnString + "\n";
 }
 

@@ -136,12 +136,14 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		for(int i = 0; i < Q.dim1(); i++){
 			diagonalMatrix(i, i) = eigenvalues[i];
 		}
+
+		#ifdef TRANSPROB_PRINT
 		std::cout << "diagonal matrix \n";
 		diagonalMatrix.print();
-
 		std::cout << "verify correct diagonalization \n";
 		Matrix<double> verifyMatrix = (((*leftMatrix) * diagonalMatrix)*(*rightMatrix));  
 		verifyMatrix.print();
+		#endif
 
 		for(int i = 0; i < Q.dim1(); i++){
 			diagonalMatrix(i, i) = std::exp(-shape * std::log(eigenvalues[i]));
@@ -154,11 +156,14 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 
 		// now get transitionProbability matrix by using the property A = P*D*P^-1
 		Matrix<double> newMatrix = ((*leftMatrix) * diagonalMatrix);
+		Matrix<double> finalMatrix = newMatrix * (*rightMatrix);
+
+		#ifdef TRANSPROB_PRINT
 		std::cout << "P * D\n";
 		newMatrix.print();
-		Matrix<double> finalMatrix = newMatrix * (*rightMatrix);
 		std::cout << "PD * P^-1\n";
 		finalMatrix.print();
+		#endif
 		
 		for(int i = 0; i < Q.dim1(); i++){
 			for(int j = 0; j < Q.dim2(); j++){

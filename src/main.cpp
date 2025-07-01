@@ -80,22 +80,14 @@ int main(int argc, char* argv[]) {
     //force updates to stationary and rate matrix
     const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
     for(int i = 0; i < 30; i ++){
-        Matrix<double> Q(4,4, 1);
-        for(int i = 0; i < 4; i++){
-            Q(i,i) = -3;
-        }
-        for(int i = 0; i < 4; i++){
-            for(int j = 0; j < 4; j++){
-                Q(i,j) /= 12;
-            }
-        }
+        Matrix<double> Q = rateMatrix.Q();
         transProb->updateQ(Q);
         for(Node* n : poSeq){
             int nIndex = n->getIndex();
             if(n != treeObject->getRoot()) {
                 n->setNeedsTPUpdate(true); 
                 std::vector<double> gammaVec = treeObject->getGammaParams(n);
-                transProb->setProbs(0, 0, nIndex, 0.5, 10);
+                transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
             }
             n->setNeedsTPUpdate(false);
             break;

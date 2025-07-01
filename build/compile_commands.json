@@ -1,0 +1,252 @@
+[
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/Alignment.cpp.o -c /workspaces/JohnPhylo/src/core/Alignment.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/Alignment.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/EigenSystem.cpp.o -c /workspaces/JohnPhylo/src/core/EigenSystem.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/EigenSystem.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/Math.cpp.o -c /workspaces/JohnPhylo/src/core/Math.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/Math.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/Msg.cpp.o -c /workspaces/JohnPhylo/src/core/Msg.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/Msg.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/Probability.cpp.o -c /workspaces/JohnPhylo/src/core/Probability.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/Probability.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/RandomVariable.cpp.o -c /workspaces/JohnPhylo/src/core/RandomVariable.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/RandomVariable.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/core/Settings.cpp.o -c /workspaces/JohnPhylo/src/core/Settings.cpp",
+  "file": "/workspaces/JohnPhylo/src/core/Settings.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/main.cpp.o -c /workspaces/JohnPhylo/src/main.cpp",
+  "file": "/workspaces/JohnPhylo/src/main.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/analysis/Mcmc.cpp.o -c /workspaces/JohnPhylo/src/modeling/analysis/Mcmc.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/analysis/Mcmc.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/model/ConditionalLikelihood.cpp.o -c /workspaces/JohnPhylo/src/modeling/model/ConditionalLikelihood.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/model/ConditionalLikelihood.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/model/Model.cpp.o -c /workspaces/JohnPhylo/src/modeling/model/Model.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/model/Model.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/model/TransitionProbability.cpp.o -c /workspaces/JohnPhylo/src/modeling/model/TransitionProbability.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/model/TransitionProbability.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/parameters/RateMatrix.cpp.o -c /workspaces/JohnPhylo/src/modeling/parameters/RateMatrix.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/parameters/RateMatrix.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/parameters/trees/Node.cpp.o -c /workspaces/JohnPhylo/src/modeling/parameters/trees/Node.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/parameters/trees/Node.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/parameters/trees/TreeObject.cpp.o -c /workspaces/JohnPhylo/src/modeling/parameters/trees/TreeObject.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/parameters/trees/TreeObject.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/src -I/workspaces/JohnPhylo/lib/taskflow -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o CMakeFiles/main.dir/src/modeling/parameters/trees/TreeParameter.cpp.o -c /workspaces/JohnPhylo/src/modeling/parameters/trees/TreeParameter.cpp",
+  "file": "/workspaces/JohnPhylo/src/modeling/parameters/trees/TreeParameter.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsassumptionsblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsassumptionsblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsassumptionsblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxscharactersblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxscharactersblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxscharactersblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxscxxdiscretematrix.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxscxxdiscretematrix.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxscxxdiscretematrix.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsdatablock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsdatablock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsdatablock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsdistancesblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsdistancesblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsdistancesblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsexception.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsexception.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsexception.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsmultiformat.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsmultiformat.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsmultiformat.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxspublicblocks.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxspublicblocks.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxspublicblocks.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsreader.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsreader.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsreader.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxssetreader.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxssetreader.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxssetreader.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsstring.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsstring.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsstring.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxstaxaassociationblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstaxaassociationblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstaxaassociationblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxstaxablock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstaxablock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstaxablock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxstoken.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstoken.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstoken.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxstreesblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstreesblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstreesblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -Dncl_shared_EXPORTS -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -fPIC -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_shared.dir/nxsunalignedblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsunalignedblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsunalignedblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsassumptionsblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsassumptionsblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsassumptionsblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxscharactersblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxscharactersblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxscharactersblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxscxxdiscretematrix.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxscxxdiscretematrix.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxscxxdiscretematrix.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsdatablock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsdatablock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsdatablock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsdistancesblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsdistancesblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsdistancesblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsexception.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsexception.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsexception.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsmultiformat.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsmultiformat.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsmultiformat.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxspublicblocks.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxspublicblocks.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxspublicblocks.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsreader.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsreader.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsreader.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxssetreader.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxssetreader.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxssetreader.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsstring.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsstring.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsstring.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxstaxaassociationblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstaxaassociationblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstaxaassociationblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxstaxablock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstaxablock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstaxablock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxstoken.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstoken.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstoken.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxstreesblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxstreesblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxstreesblock.cpp"
+},
+{
+  "directory": "/workspaces/JohnPhylo/build",
+  "command": "/usr/bin/clang++ -I/workspaces/JohnPhylo/lib/ncl/ncl -I/workspaces/JohnPhylo/lib/ncl/ncl/.. -g -std=gnu++17 -o lib/ncl/ncl/CMakeFiles/ncl_static.dir/nxsunalignedblock.cpp.o -c /workspaces/JohnPhylo/lib/ncl/ncl/nxsunalignedblock.cpp",
+  "file": "/workspaces/JohnPhylo/lib/ncl/ncl/nxsunalignedblock.cpp"
+}
+]

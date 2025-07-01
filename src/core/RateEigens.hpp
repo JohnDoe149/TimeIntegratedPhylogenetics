@@ -55,6 +55,10 @@ struct RateEigen {
             numStates = other.numStates;
             eigenvalue = new double[numStates];
             oldEigenvalue = new double[numStates];
+            diagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+            oldDiagLeftMatrix = new Matrix<double>(numStates, numStates, 0.0);
+            diagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
+            oldDiagRightMatrix = new Matrix<double>(numStates, numStates, 0.0);
 
             diagLeftMatrix->inject(*(other.diagLeftMatrix));
             oldDiagLeftMatrix->inject(*(other.oldDiagLeftMatrix));
@@ -131,6 +135,8 @@ struct ComplexRateEigen {
             numStates = other.numStates;
             ceigenvalue = new std::complex<double>[numStates];
             oldCeigenvalue = new std::complex<double>[numStates];
+
+
             cDiagLeftMatrix->inject(*(other.cDiagLeftMatrix));
             cDiagRightMatrix->inject(*(other.cDiagRightMatrix));
             oldCDiagLeftMatrix->inject(*(other.oldCDiagLeftMatrix));

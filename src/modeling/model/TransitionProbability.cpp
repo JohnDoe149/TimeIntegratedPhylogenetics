@@ -37,13 +37,13 @@ void TransitionProbability::accept(void) {
 	for(int i = 0; i < isComplex.size(); i++){
 		if(!isComplex[i]){
 			memcpy(rateEigen[i].oldEigenvalue, rateEigen[i].eigenvalue, numStates*sizeof(double));
-			memcpy(rateEigen[i].oldDiagLeftMatrix, rateEigen[i].diagLeftMatrix, numStates*numStates*sizeof(double));
-			memcpy(rateEigen[i].oldDiagRightMatrix, rateEigen[i].diagRightMatrix, numStates*numStates*sizeof(double));
+            rateEigen[i].oldDiagLeftMatrix->inject(*rateEigen[i].diagLeftMatrix);
+            rateEigen[i].oldDiagRightMatrix->inject(*rateEigen[i].diagRightMatrix);
 		}
 		else {
 			memcpy(complexRateEigen[i].oldCeigenvalue, complexRateEigen[i].ceigenvalue, numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].oldCDiagLeftMatrix, complexRateEigen[i].cDiagLeftMatrix, numStates*numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].oldCDiagRightMatrix, complexRateEigen[i].cDiagRightMatrix, numStates*numStates*sizeof(std::complex<double>));
+            complexRateEigen[i].oldCDiagLeftMatrix->inject(*complexRateEigen[i].cDiagLeftMatrix);
+            complexRateEigen[i].oldCDiagRightMatrix->inject(*complexRateEigen[i].cDiagRightMatrix);
 		}
 	}
 }
@@ -96,14 +96,9 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	#endif
 
 	// next perform a scalar multiplication by 1/scale and then subtract the transformed matrix from the identity matrix (I-A)
-	transformMatrix *= 1/scale;
+	transformMatrix *= -1/scale;
 	for(int i = 0; i < transformMatrix.dim1(); i++){
-		for(int j = 0; j < transformMatrix.dim2(); j++){
-			transformMatrix(i,j) = -1 * transformMatrix(i,j);
-			if(i == j){
-				transformMatrix(i,j) = 1 + transformMatrix(i,j);
-			}
-		}
+		transformMatrix(i,i) = 1 + transformMatrix(i,i);
 	}
 
 	#ifdef TRANSPROB_PRINT
@@ -145,6 +140,7 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		verifyMatrix.print();
 		#endif
 
+		// take the diagonal matrix to the -shape power. Here we use the property a^b = e^(b * log(a)) 
 		for(int i = 0; i < Q.dim1(); i++){
 			diagonalMatrix(i, i) = std::exp(-shape * std::log(eigenvalues[i]));
 		}
@@ -165,13 +161,13 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		finalMatrix.print();
 		#endif
 		
+		// copy over the matrix to designated buffer for transition probability matrix
 		for(int i = 0; i < Q.dim1(); i++){
 			for(int j = 0; j < Q.dim2(); j++){
 				P0(i,j) = finalMatrix(i, j); 
 			}
 		}
 
-		
 		#ifdef TRANSPROB_PRINT
 		std::cout << "transition probability matrix: \n";
 		P0.print();
@@ -242,7 +238,6 @@ void TransitionProbability::allocateQ(int size){
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();
 	probs2.shrink_to_fit();
-
 }
 
 // Be sure you want to delete!!

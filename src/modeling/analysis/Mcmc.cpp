@@ -33,7 +33,7 @@ void Mcmc::burnin(){
 
     double currentLnPosterior = model->lnLikelihood() + model->lnPrior();
 
-    for(int n = 1; n <= numBurnIn; n++){
+    for(int n = 1; n <= 10; n++){
         if(n % printFreq == 0){
             std::cout << "Burn-in Iteration " << n << ": " << currentLnPosterior << std::endl;
         }
@@ -100,7 +100,7 @@ void Mcmc::run(){
     fs << model->treeHeader();
     fs.close();
 
-    for(int n = 1; n <= numIter; n++){
+    for(int n = 1; n <= 10; n++){
         if(n % printFreq == 0){
             std::cout << model->tabularOut(n);
         }

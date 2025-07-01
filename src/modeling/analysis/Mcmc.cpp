@@ -119,38 +119,46 @@ void Mcmc::run(){
         double randomMove = rng.uniformRv() * rateChoice;
 
         std::function<double()> updater;
+        int gibbsUpdates;
 
         if(randomMove < treeChoice){
-            
+    
             // pick between topology or branch update
             int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
+            #ifdef FIXED_TOPOLOGY
+            coinFlip = 1;
+            #endif
             if(coinFlip){
                 updater = [this]() { return tree->updateTreeGamma(); };
+                gibbsUpdates = tree->getTree()->getNumNodes();
             } else{
                 updater = [this]() { return tree->updateTreeMove(); };
+                gibbsUpdates = 2;
             }
         }
         else if(randomMove < stationaryChoice){
             updater = [this]() { return rateMatrix->updateStationary(); };
+            gibbsUpdates = 2;
         }
         else {
             updater = [this]() { return rateMatrix->updateRates(); };
+            gibbsUpdates = 2;
         }
 
-        double lnProposalRatio = updater();
-        model->regenerateLikelihood();
-
-        double newLnPosterior = model->lnLikelihood() + model->lnPrior();
-
-        double lnPosteriorRatio = newLnPosterior - currentLnPosterior;
-        double lnR = lnProposalRatio + lnPosteriorRatio;
-
-        if(std::log(rng.uniformRv()) < lnR){
-            model->accept();
-            currentLnPosterior = newLnPosterior;
-        }
-        else{
-            model->reject();
+        // Now use the gibbs sampler 
+        for(int gibbIter = 0; gibbIter < gibbsUpdates; gibbIter++){
+            double lnProposalRatio = updater();
+            model->regenerateLikelihood();
+            double newLnPosterior = model->lnLikelihood() + model->lnPrior();
+            double lnPosteriorRatio = newLnPosterior - currentLnPosterior;
+            double lnR = lnProposalRatio + lnPosteriorRatio;
+            if(std::log(rng.uniformRv()) < lnR){
+                model->accept();
+                currentLnPosterior = newLnPosterior;
+            }
+            else{
+                model->reject();
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 #include "core/Alignment.hpp"
 #include "core/Msg.hpp"
 
+// [LEGACY CODE] unmodified from the original code base
 ConditionalLikelihood::ConditionalLikelihood(Alignment* aln, int nN, int nR) : numNodes(nN), numRates(nR), stateSpace(4) {
     numChar = aln->getNumChar();
     int width = numNodes*numChar*stateSpace*numRates;

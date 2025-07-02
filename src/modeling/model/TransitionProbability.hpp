@@ -16,13 +16,9 @@ class TransitionProbability {
                                     return (s == 0) ? probs1[r][n] : probs2[r][n];
                                 }
         int                     getNumStates(void) { return numStates; }
-        int                     getNumMatrices(void) {return isComplex.size();}
         void                    accept(void);          
         void                    reject(void);                  
-        
-        // CHANGED TO NOW ACCEPT GAMMA PARAMS INSTEAD OF BRANCH LENGTH
         void                    setProbs(const int state, const int r, const int node, double alpha, double beta);
-    
         std::vector<Matrix<double>>     generateProbs(Matrix<double> Q, std::vector<double> branches);
         void                    updateQ(Matrix<double> Q);
         void                    deleteQ(const int index);
@@ -33,8 +29,8 @@ class TransitionProbability {
         EigenSystem*            eigens;
         std::vector<RateEigen>  rateEigen;
         std::vector<ComplexRateEigen> complexRateEigen;
-        std::vector<bool>       isComplex;
-        std::vector<bool>       isOldComplex;
+        bool                    isComplex;
+        bool                    isOldComplex;
         int                     numNodes;
         int                     numStates;
         Matrix<double>          Q;

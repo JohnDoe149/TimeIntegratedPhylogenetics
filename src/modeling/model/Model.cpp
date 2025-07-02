@@ -105,8 +105,11 @@ double Model::lnPrior(){
     return tree->lnPrior() + rateMatrix->lnPrior();
 }
 
+// This method is called mainly when certain model parameters have changed (such as the rate matrix) to recalculate
+// the ConditionalLikelihood of the tree. The calculation relies on having the transition probability of each node,
+// So this method also checks each node that needs to have its transition probability recalculated.
 void Model::regenerateLikelihood(){
-    TreeObject* activeT = tree->getTree();
+    TreeObject* activeT = tree->getTree(); 
 
     const std::vector<Node*> poSeq = activeT->getPostOrderSeq();
 
@@ -120,7 +123,8 @@ void Model::regenerateLikelihood(){
     //std::chrono::steady_clock::time_point rateTime = std::chrono::steady_clock::now();
     //std::cout << "Rate computation was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(rateTime - begin).count() << "[milliseconds]" << std::endl;
 
-    // for each node, 
+    // for each node, check if they need a Transition Probability update, if so recalculate their transition
+    // probability and find the node's activeIndex to determine which buffer to use.
     for(Node* n : poSeq){
         int nIndex = n->getIndex();
         if(n->getNeedsTPUpdate() == true){
@@ -143,6 +147,7 @@ void Model::regenerateLikelihood(){
         }
     }
 
+    // Legacy logic below; Conditioal Likelihood Calculation didn't need to be changed, so left untouched
     tf::Taskflow phyloTaskflow;
     
     // CL likelihood calculation
@@ -243,11 +248,14 @@ void Model::regenerateLikelihood(){
     //std::cout << "Pruning was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(pruneTime - probsTime).count() << "[milliseconds]" << std::endl;
 }
 
+// This method called this current object's tree and rateMatrix and asks them to tune.
 void Model::tuneMoves(){
     tree->tune();
     rateMatrix->tune();
 }
 
+// This method when called returns a string to serve as a  header that contains all of the parameters used
+// in the model
 std::string Model::tabularHeader(){
     std::string returnString = "Iteration\tPosterior\tLikelihood\tTree Prior";
     for(int i = 0; i < stateSpace; i++){
@@ -263,6 +271,8 @@ std::string Model::tabularHeader(){
     return returnString + "\n";
 }
 
+// This method when called returns a string that prints out the values of each parameter. Parameters
+// include each branch's gamma parameters, the stationary distribution, likelihood and etc.
 std::string Model::tabularOut(int i){
     std::string returnString = std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" +
                                std::to_string(currentLikelihood) + "\t" + std::to_string(tree->lnPrior());

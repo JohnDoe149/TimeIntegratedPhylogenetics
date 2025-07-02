@@ -6,8 +6,6 @@
 struct RateEigen {
     double* eigenvalue;
     double* oldEigenvalue;
-    
-    // johndu addition to support gammaDist model
     Matrix<double>* diagLeftMatrix;
     Matrix<double>* oldDiagLeftMatrix;
     Matrix<double>* diagRightMatrix;

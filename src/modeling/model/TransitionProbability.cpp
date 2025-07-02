@@ -34,17 +34,15 @@ TransitionProbability::~TransitionProbability(void) {
 */
 void TransitionProbability::accept(void) {
 	isOldComplex = isComplex;
-	for(int i = 0; i < isComplex.size(); i++){
-		if(!isComplex[i]){
-			memcpy(rateEigen[i].oldEigenvalue, rateEigen[i].eigenvalue, numStates*sizeof(double));
-            rateEigen[i].oldDiagLeftMatrix->inject(*rateEigen[i].diagLeftMatrix);
-            rateEigen[i].oldDiagRightMatrix->inject(*rateEigen[i].diagRightMatrix);
-		}
-		else {
-			memcpy(complexRateEigen[i].oldCeigenvalue, complexRateEigen[i].ceigenvalue, numStates*sizeof(std::complex<double>));
-            complexRateEigen[i].oldCDiagLeftMatrix->inject(*complexRateEigen[i].cDiagLeftMatrix);
-            complexRateEigen[i].oldCDiagRightMatrix->inject(*complexRateEigen[i].cDiagRightMatrix);
-		}
+	if(!isComplex){
+		memcpy(rateEigen[0].oldEigenvalue, rateEigen[0].eigenvalue, numStates*sizeof(double));
+		rateEigen[0].oldDiagLeftMatrix->inject(*rateEigen[0].diagLeftMatrix);
+		rateEigen[0].oldDiagRightMatrix->inject(*rateEigen[0].diagRightMatrix);
+	}
+	else {
+		memcpy(complexRateEigen[0].oldCeigenvalue, complexRateEigen[0].ceigenvalue, numStates*sizeof(std::complex<double>));
+		complexRateEigen[0].oldCDiagLeftMatrix->inject(*complexRateEigen[0].cDiagLeftMatrix);
+		complexRateEigen[0].oldCDiagRightMatrix->inject(*complexRateEigen[0].cDiagRightMatrix);
 	}
 }
 
@@ -54,18 +52,18 @@ void TransitionProbability::accept(void) {
 */
 void TransitionProbability::reject(void) {	
 	isComplex = isOldComplex;
-	for(int i = 0; i < isOldComplex.size(); i++){
-		if(!isComplex[i]){
-			memcpy(rateEigen[i].eigenvalue, rateEigen[i].oldEigenvalue, numStates*sizeof(double));
-            rateEigen[i].diagLeftMatrix->inject(*rateEigen[i].oldDiagLeftMatrix);
-            rateEigen[i].diagRightMatrix->inject(*rateEigen[i].oldDiagRightMatrix);
-		}
-		else {
-			memcpy(complexRateEigen[i].ceigenvalue, complexRateEigen[i].oldCeigenvalue, numStates*sizeof(std::complex<double>));
-            complexRateEigen[i].cDiagLeftMatrix->inject(*complexRateEigen[i].oldCDiagLeftMatrix);
-            complexRateEigen[i].cDiagRightMatrix->inject(*complexRateEigen[i].oldCDiagRightMatrix);
-		}
+
+	if(!isComplex){
+		memcpy(rateEigen[0].eigenvalue, rateEigen[0].oldEigenvalue, numStates*sizeof(double));
+		rateEigen[0].diagLeftMatrix->inject(*rateEigen[0].oldDiagLeftMatrix);
+		rateEigen[0].diagRightMatrix->inject(*rateEigen[0].oldDiagRightMatrix);
 	}
+	else {
+		memcpy(complexRateEigen[0].ceigenvalue, complexRateEigen[0].oldCeigenvalue, numStates*sizeof(std::complex<double>));
+		complexRateEigen[0].cDiagLeftMatrix->inject(*complexRateEigen[0].oldCDiagLeftMatrix);
+		complexRateEigen[0].cDiagRightMatrix->inject(*complexRateEigen[0].oldCDiagRightMatrix);
+	}
+
 }
 
 /* This method calculates the transition probability for the branch that flows into param node. Stores the calculated transition
@@ -107,10 +105,10 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 	#endif
 
 	// get the eigenvalues and eigenvectors via eigens->update. x
-	isComplex[0] = eigens->update(transformMatrix, rateEigen[0], complexRateEigen[0]);
+	isComplex = eigens->update(transformMatrix, rateEigen[0], complexRateEigen[0]);
 	
 	// now split here depending on whether or not we have complex eigenvalues
-	if(!isComplex[0]){
+	if(!isComplex){
 		RateEigen newDiag = rateEigen[0];
 		Matrix<double> *leftMatrix = newDiag.diagLeftMatrix;
 		Matrix<double> *rightMatrix = newDiag.diagRightMatrix;
@@ -216,24 +214,19 @@ void TransitionProbability::updateQ(Matrix<double> otherQ){
 }
 
 void TransitionProbability::allocateQ(int size){
-	if(size > isComplex.size()) {
-		for(int i = 0, num = size - isComplex.size(); i < num; i++){
-			isComplex.push_back(false);
-			rateEigen.push_back(RateEigen(numStates));
-			complexRateEigen.push_back(ComplexRateEigen(numStates)); //initialize a ComplexRateEigen struct
 
-			probs1.push_back(new Matrix<double>[numNodes]);
-			probs2.push_back(new Matrix<double>[numNodes]);
+	rateEigen.push_back(RateEigen(numStates));
+	complexRateEigen.push_back(ComplexRateEigen(numStates)); //initialize a ComplexRateEigen struct
 
-			// for each node, initialize two matrices, one in probs1 and probs 2
-			for(int j = 0; j < numNodes; j++){
-				probs1.back()[j] = Matrix<double>(numStates, numStates, 0.0);
-       	 		probs2.back()[j] = Matrix<double>(numStates, numStates, 0.0);
-			}
-		}
+	probs1.push_back(new Matrix<double>[numNodes]);
+	probs2.push_back(new Matrix<double>[numNodes]);
+
+	// for each node, initialize two matrices, one in probs1 and probs 2
+	for(int j = 0; j < numNodes; j++){
+		probs1.back()[j] = Matrix<double>(numStates, numStates, 0.0);
+		probs2.back()[j] = Matrix<double>(numStates, numStates, 0.0);
 	}
 
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();
@@ -242,8 +235,6 @@ void TransitionProbability::allocateQ(int size){
 
 // Be sure you want to delete!!
 void TransitionProbability::deleteQ(const int index) {
-	isComplex.erase(isComplex.begin() + index);
-	rateEigen.erase(rateEigen.begin() + index);
 	complexRateEigen.erase(complexRateEigen.begin() + index);
 
 	auto prob_it1 = probs1.begin() + index;
@@ -254,7 +245,6 @@ void TransitionProbability::deleteQ(const int index) {
 	delete [] *prob_it2;
 	probs2.erase(prob_it2);
 
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();
@@ -263,7 +253,6 @@ void TransitionProbability::deleteQ(const int index) {
 
 void TransitionProbability::deleteNQ(const int count) {
 	for(int i = 0; i < count; i++){
-		isComplex.pop_back();
 		rateEigen.pop_back();
 		complexRateEigen.pop_back();
 
@@ -276,7 +265,6 @@ void TransitionProbability::deleteNQ(const int count) {
 		probs2.pop_back();
 	}
 	
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();

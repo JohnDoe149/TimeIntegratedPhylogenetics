@@ -5,6 +5,7 @@
 class Alignment;
 class Node;
 
+// [LEGACY CODE] unmodified from the original code base
 class ConditionalLikelihood{
     public:
         ConditionalLikelihood(void) = delete;

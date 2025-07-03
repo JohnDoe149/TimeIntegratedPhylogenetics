@@ -311,7 +311,6 @@ void TreeObject::showNode(Node* p, int indent) const{
     std::cout << ") ";
 
     if(p->getAncestor() != nullptr)
-        std::cout ;
         // FIX THIS LATER
         //<< this->getBranchLength(p) << " ";
 

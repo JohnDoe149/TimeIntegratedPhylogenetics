@@ -20,190 +20,28 @@ BUILD_GMOCK:BOOL=ON
 //Build the testing tree.
 BUILD_TESTING:BOOL=ON
 
-//Read docs/configuration.md for details
-CATCH_CONFIG_ANDROID_LOGWRITE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_BAZEL_SUPPORT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_COLOUR_WIN32:BOOL=OFF
-
-//Read docs/configuration.md for details. Must form a valid integer
-// literal.
-CATCH_CONFIG_CONSOLE_WIDTH:STRING=80
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_COUNTER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP11_TO_STRING:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP17_BYTE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP17_OPTIONAL:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP17_STRING_VIEW:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_CPP17_VARIANT:BOOL=OFF
-
-//Read docs/configuration.md for details. The name of the reporter
-// should be without quotes.
-CATCH_CONFIG_DEFAULT_REPORTER:STRING=console
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_DISABLE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_DISABLE_EXCEPTIONS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_DISABLE_EXCEPTIONS_CUSTOM_HANDLER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_DISABLE_STRINGIFICATION:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_ENABLE_ALL_STRINGMAKERS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_ENABLE_OPTIONAL_STRINGMAKER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_ENABLE_VARIANT_STRINGMAKER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_EXPERIMENTAL_REDIRECT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_FAST_COMPILE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_GETENV:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_GLOBAL_NEXTAFTER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NOSTDOUT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_ANDROID_LOGWRITE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_BAZEL_SUPPORT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_COLOUR_WIN32:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_COUNTER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP11_TO_STRING:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP17_BYTE:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP17_OPTIONAL:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP17_STRING_VIEW:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_CPP17_VARIANT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_GETENV:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_GLOBAL_NEXTAFTER:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_POSIX_SIGNALS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_USE_ASYNC:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_WCHAR:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_NO_WINDOWS_SEH:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_POSIX_SIGNALS:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_PREFIX_ALL:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_PREFIX_MESSAGES:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_USE_ASYNC:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_WCHAR:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_WINDOWS_CRTDBG:BOOL=OFF
-
-//Read docs/configuration.md for details
-CATCH_CONFIG_WINDOWS_SEH:BOOL=OFF
-
-//Build tests, enable warnings, enable Werror, etc
-CATCH_DEVELOPMENT_BUILD:BOOL=OFF
-
-//Add compiler flags for improving build reproducibility
-CATCH_ENABLE_REPRODUCIBLE_BUILD:BOOL=ON
-
-//Install documentation alongside library
-CATCH_INSTALL_DOCS:BOOL=ON
-
-//Install extras (CMake scripts, debugger helpers) alongside library
-CATCH_INSTALL_EXTRAS:BOOL=ON
+//Path to a program.
+CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
 //Path to a program.
-CMAKE_ADDR2LINE:FILEPATH=/usr/bin/llvm-addr2line
+CMAKE_AR:FILEPATH=/usr/bin/ar
 
-//Path to a program.
-CMAKE_AR:FILEPATH=/usr/bin/llvm-ar
+//Choose the type of build.
+CMAKE_BUILD_TYPE:STRING=Release
 
-//No help, variable specified on the command line.
-CMAKE_BUILD_TYPE:STRING=Debug
+//Enable/Disable color output during build.
+CMAKE_COLOR_MAKEFILE:BOOL=ON
 
-//No help, variable specified on the command line.
-CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/clang++
+//CXX compiler
+CMAKE_CXX_COMPILER:FILEPATH=/usr/bin/c++
 
-//LLVM archiver
-CMAKE_CXX_COMPILER_AR:FILEPATH=/usr/bin/llvm-ar-18
+//A wrapper around 'ar' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_CXX_COMPILER_AR:FILEPATH=/usr/bin/gcc-ar-13
 
-//Generate index for LLVM archive
-CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/usr/bin/llvm-ranlib-18
+//A wrapper around 'ranlib' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_CXX_COMPILER_RANLIB:FILEPATH=/usr/bin/gcc-ranlib-13
 
 //Flags used by the CXX compiler during all build types.
 CMAKE_CXX_FLAGS:STRING=
@@ -220,14 +58,16 @@ CMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 //Flags used by the CXX compiler during RELWITHDEBINFO builds.
 CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
-//No help, variable specified on the command line.
-CMAKE_C_COMPILER:FILEPATH=/usr/bin/clang
+//C compiler
+CMAKE_C_COMPILER:FILEPATH=/usr/bin/cc
 
-//LLVM archiver
-CMAKE_C_COMPILER_AR:FILEPATH=/usr/bin/llvm-ar-18
+//A wrapper around 'ar' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_C_COMPILER_AR:FILEPATH=/usr/bin/gcc-ar-13
 
-//Generate index for LLVM archive
-CMAKE_C_COMPILER_RANLIB:FILEPATH=/usr/bin/llvm-ranlib-18
+//A wrapper around 'ranlib' adding the appropriate '--plugin' option
+// for the GCC compiler
+CMAKE_C_COMPILER_RANLIB:FILEPATH=/usr/bin/gcc-ranlib-13
 
 //Flags used by the C compiler during all build types.
 CMAKE_C_FLAGS:STRING=
@@ -245,7 +85,7 @@ CMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //Path to a program.
-CMAKE_DLLTOOL:FILEPATH=/usr/bin/llvm-dlltool
+CMAKE_DLLTOOL:FILEPATH=CMAKE_DLLTOOL-NOTFOUND
 
 //Flags used by the linker during all build types.
 CMAKE_EXE_LINKER_FLAGS:STRING=
@@ -262,8 +102,8 @@ CMAKE_EXE_LINKER_FLAGS_RELEASE:STRING=
 //Flags used by the linker during RELWITHDEBINFO builds.
 CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
-//No help, variable specified on the command line.
-CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE
+//Enable/Disable output of compile commands during generation.
+CMAKE_EXPORT_COMPILE_COMMANDS:BOOL=
 
 //User executables (bin)
 CMAKE_INSTALL_BINDIR:PATH=bin
@@ -319,8 +159,8 @@ CMAKE_INSTALL_SYSCONFDIR:PATH=etc
 //Path to a program.
 CMAKE_LINKER:FILEPATH=/usr/bin/ld
 
-//Program used to build from build.ninja files.
-CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/ninja
+//Path to a program.
+CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/gmake
 
 //Flags used by the linker during the creation of modules during
 // all build types.
@@ -343,13 +183,13 @@ CMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_NM:FILEPATH=/usr/bin/llvm-nm
+CMAKE_NM:FILEPATH=/usr/bin/nm
 
 //Path to a program.
-CMAKE_OBJCOPY:FILEPATH=/usr/bin/llvm-objcopy
+CMAKE_OBJCOPY:FILEPATH=/usr/bin/objcopy
 
 //Path to a program.
-CMAKE_OBJDUMP:FILEPATH=/usr/bin/llvm-objdump
+CMAKE_OBJDUMP:FILEPATH=/usr/bin/objdump
 
 //Value Computed by CMake
 CMAKE_PROJECT_DESCRIPTION:STATIC=
@@ -376,10 +216,10 @@ CMAKE_PROJECT_VERSION_PATCH:STATIC=0
 CMAKE_PROJECT_VERSION_TWEAK:STATIC=
 
 //Path to a program.
-CMAKE_RANLIB:FILEPATH=/usr/bin/llvm-ranlib
+CMAKE_RANLIB:FILEPATH=/usr/bin/ranlib
 
 //Path to a program.
-CMAKE_READELF:FILEPATH=/usr/bin/llvm-readelf
+CMAKE_READELF:FILEPATH=/usr/bin/readelf
 
 //Flags used by the linker during the creation of shared libraries
 // during all build types.
@@ -429,7 +269,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
 //Path to a program.
-CMAKE_STRIP:FILEPATH=/usr/bin/llvm-strip
+CMAKE_STRIP:FILEPATH=/usr/bin/strip
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -450,18 +290,6 @@ CTEST_SUBMIT_RETRY_COUNT:STRING=3
 //How long to wait between timed-out CTest submissions.
 CTEST_SUBMIT_RETRY_DELAY:STRING=5
 
-//Dependencies for the target
-Catch2WithMain_LIB_DEPENDS:STATIC=general;Catch2;
-
-//Value Computed by CMake
-Catch2_BINARY_DIR:STATIC=/workspaces/JohnPhylo/build/_deps/catch2-build
-
-//Value Computed by CMake
-Catch2_IS_TOP_LEVEL:STATIC=OFF
-
-//Value Computed by CMake
-Catch2_SOURCE_DIR:STATIC=/workspaces/JohnPhylo/build/_deps/catch2-src
-
 //Maximum time allowed before CTest will kill the test.
 DART_TESTING_TIMEOUT:STRING=1500
 
@@ -476,24 +304,14 @@ FETCHCONTENT_FULLY_DISCONNECTED:BOOL=OFF
 FETCHCONTENT_QUIET:BOOL=ON
 
 //When not empty, overrides where to find pre-populated content
-// for Catch2
-FETCHCONTENT_SOURCE_DIR_CATCH2:PATH=
-
-//When not empty, overrides where to find pre-populated content
 // for googletest
 FETCHCONTENT_SOURCE_DIR_GOOGLETEST:PATH=
 
 //Enables UPDATE_DISCONNECTED behavior for all content population
 FETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF
 
-//Enables UPDATE_DISCONNECTED behavior just for population of Catch2
-FETCHCONTENT_UPDATES_DISCONNECTED_CATCH2:BOOL=OFF
-
 //Enables UPDATE_DISCONNECTED behavior just for population of googletest
 FETCHCONTENT_UPDATES_DISCONNECTED_GOOGLETEST:BOOL=OFF
-
-//Git command line client
-GIT_EXECUTABLE:FILEPATH=/usr/local/bin/git
 
 //Use Abseil and RE2. Requires Abseil and RE2 to be separately
 // added to the build.
@@ -620,112 +438,12 @@ ncl_SOURCE_DIR:STATIC=/workspaces/JohnPhylo/lib/ncl
 # INTERNAL cache entries
 ########################
 
-//ADVANCED property for variable: CATCH_CONFIG_ANDROID_LOGWRITE
-CATCH_CONFIG_ANDROID_LOGWRITE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_BAZEL_SUPPORT
-CATCH_CONFIG_BAZEL_SUPPORT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_COLOUR_WIN32
-CATCH_CONFIG_COLOUR_WIN32-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CONSOLE_WIDTH
-CATCH_CONFIG_CONSOLE_WIDTH-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_COUNTER
-CATCH_CONFIG_COUNTER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP11_TO_STRING
-CATCH_CONFIG_CPP11_TO_STRING-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP17_BYTE
-CATCH_CONFIG_CPP17_BYTE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP17_OPTIONAL
-CATCH_CONFIG_CPP17_OPTIONAL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP17_STRING_VIEW
-CATCH_CONFIG_CPP17_STRING_VIEW-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS
-CATCH_CONFIG_CPP17_UNCAUGHT_EXCEPTIONS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_CPP17_VARIANT
-CATCH_CONFIG_CPP17_VARIANT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_DEFAULT_REPORTER
-CATCH_CONFIG_DEFAULT_REPORTER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_DISABLE
-CATCH_CONFIG_DISABLE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_DISABLE_EXCEPTIONS
-CATCH_CONFIG_DISABLE_EXCEPTIONS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_DISABLE_EXCEPTIONS_CUSTOM_HANDLER
-CATCH_CONFIG_DISABLE_EXCEPTIONS_CUSTOM_HANDLER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_DISABLE_STRINGIFICATION
-CATCH_CONFIG_DISABLE_STRINGIFICATION-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_ENABLE_ALL_STRINGMAKERS
-CATCH_CONFIG_ENABLE_ALL_STRINGMAKERS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_ENABLE_OPTIONAL_STRINGMAKER
-CATCH_CONFIG_ENABLE_OPTIONAL_STRINGMAKER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER
-CATCH_CONFIG_ENABLE_PAIR_STRINGMAKER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER
-CATCH_CONFIG_ENABLE_TUPLE_STRINGMAKER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_ENABLE_VARIANT_STRINGMAKER
-CATCH_CONFIG_ENABLE_VARIANT_STRINGMAKER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_EXPERIMENTAL_REDIRECT
-CATCH_CONFIG_EXPERIMENTAL_REDIRECT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT
-CATCH_CONFIG_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_FAST_COMPILE
-CATCH_CONFIG_FAST_COMPILE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_GETENV
-CATCH_CONFIG_GETENV-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_GLOBAL_NEXTAFTER
-CATCH_CONFIG_GLOBAL_NEXTAFTER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NOSTDOUT
-CATCH_CONFIG_NOSTDOUT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_ANDROID_LOGWRITE
-CATCH_CONFIG_NO_ANDROID_LOGWRITE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_BAZEL_SUPPORT
-CATCH_CONFIG_NO_BAZEL_SUPPORT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_COLOUR_WIN32
-CATCH_CONFIG_NO_COLOUR_WIN32-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_COUNTER
-CATCH_CONFIG_NO_COUNTER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP11_TO_STRING
-CATCH_CONFIG_NO_CPP11_TO_STRING-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP17_BYTE
-CATCH_CONFIG_NO_CPP17_BYTE-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP17_OPTIONAL
-CATCH_CONFIG_NO_CPP17_OPTIONAL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP17_STRING_VIEW
-CATCH_CONFIG_NO_CPP17_STRING_VIEW-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS
-CATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_CPP17_VARIANT
-CATCH_CONFIG_NO_CPP17_VARIANT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT
-CATCH_CONFIG_NO_EXPERIMENTAL_STATIC_ANALYSIS_SUPPORT-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_GETENV
-CATCH_CONFIG_NO_GETENV-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_GLOBAL_NEXTAFTER
-CATCH_CONFIG_NO_GLOBAL_NEXTAFTER-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_POSIX_SIGNALS
-CATCH_CONFIG_NO_POSIX_SIGNALS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_USE_ASYNC
-CATCH_CONFIG_NO_USE_ASYNC-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_WCHAR
-CATCH_CONFIG_NO_WCHAR-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_NO_WINDOWS_SEH
-CATCH_CONFIG_NO_WINDOWS_SEH-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_POSIX_SIGNALS
-CATCH_CONFIG_POSIX_SIGNALS-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_PREFIX_ALL
-CATCH_CONFIG_PREFIX_ALL-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_PREFIX_MESSAGES
-CATCH_CONFIG_PREFIX_MESSAGES-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_USE_ASYNC
-CATCH_CONFIG_USE_ASYNC-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_WCHAR
-CATCH_CONFIG_WCHAR-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_WINDOWS_CRTDBG
-CATCH_CONFIG_WINDOWS_CRTDBG-ADVANCED:INTERNAL=1
-//ADVANCED property for variable: CATCH_CONFIG_WINDOWS_SEH
-CATCH_CONFIG_WINDOWS_SEH-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
+//STRINGS property for variable: CMAKE_BUILD_TYPE
+CMAKE_BUILD_TYPE-STRINGS:INTERNAL=Debug;Release;MinSizeRel;RelWithDebInfo
 //This is the directory where this CMakeCache.txt was created
 CMAKE_CACHEFILE_DIR:INTERNAL=/workspaces/JohnPhylo/build
 //Major version of cmake used to create the current loaded cache
@@ -734,6 +452,8 @@ CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
 CMAKE_CACHE_MINOR_VERSION:INTERNAL=22
 //Patch version of cmake used to create the current loaded cache
 CMAKE_CACHE_PATCH_VERSION:INTERNAL=2
+//ADVANCED property for variable: CMAKE_COLOR_MAKEFILE
+CMAKE_COLOR_MAKEFILE-ADVANCED:INTERNAL=1
 //Path to CMake executable.
 CMAKE_COMMAND:INTERNAL=/opt/cmake/bin/cmake
 //Path to cpack program executable.
@@ -777,7 +497,7 @@ CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_DLLTOOL
 CMAKE_DLLTOOL-ADVANCED:INTERNAL=1
 //Path to cache edit program executable.
-CMAKE_EDIT_COMMAND:INTERNAL=/opt/cmake/bin/cmake-gui
+CMAKE_EDIT_COMMAND:INTERNAL=/opt/cmake/bin/ccmake
 //Executable file format
 CMAKE_EXECUTABLE_FORMAT:INTERNAL=ELF
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS
@@ -790,10 +510,12 @@ CMAKE_EXE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1
 CMAKE_EXE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO
 CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: CMAKE_EXPORT_COMPILE_COMMANDS
+CMAKE_EXPORT_COMPILE_COMMANDS-ADVANCED:INTERNAL=1
 //Name of external makefile project generator.
 CMAKE_EXTRA_GENERATOR:INTERNAL=
 //Name of generator.
-CMAKE_GENERATOR:INTERNAL=Ninja
+CMAKE_GENERATOR:INTERNAL=Unix Makefiles
 //Generator instance identifier.
 CMAKE_GENERATOR_INSTANCE:INTERNAL=
 //Name of generator platform.
@@ -858,7 +580,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=7
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=8
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -909,26 +631,14 @@ COVERAGE_EXTRA_FLAGS-ADVANCED:INTERNAL=1
 CTEST_SUBMIT_RETRY_COUNT-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CTEST_SUBMIT_RETRY_DELAY
 CTEST_SUBMIT_RETRY_DELAY-ADVANCED:INTERNAL=1
-//Project GUID
-Catch2WithMain_GUID_CMAKE:INTERNAL=8bd3552a-2cfb-4a59-ab15-2031b97ada1e
-//Project GUID
-Catch2_GUID_CMAKE:INTERNAL=8d538cbe-01bf-4a2e-a98a-6c368fdf13d7
 //ADVANCED property for variable: DART_TESTING_TIMEOUT
 DART_TESTING_TIMEOUT-ADVANCED:INTERNAL=1
 //Details about finding Python
 FIND_PACKAGE_MESSAGE_DETAILS_Python:INTERNAL=[/usr/bin/python3][cfound components: Interpreter ][v3.12.3()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
-//ADVANCED property for variable: GIT_EXECUTABLE
-GIT_EXECUTABLE-ADVANCED:INTERNAL=1
 //Test HAVE_CXX_ATOMICS_WITHOUT_LIB
-HAVE_CXX_ATOMICS_WITHOUT_LIB:INTERNAL=
-//Test HAVE_CXX_ATOMICS_WITH_LIB
-HAVE_CXX_ATOMICS_WITH_LIB:INTERNAL=1
-//Test HAVE_FLAG__ffile_prefix_map__workspaces_JohnPhylo_build__deps_catch2_src__
-HAVE_FLAG__ffile_prefix_map__workspaces_JohnPhylo_build__deps_catch2_src__:INTERNAL=1
-//Have library atomic
-HAVE_LIBATOMIC:INTERNAL=1
+HAVE_CXX_ATOMICS_WITHOUT_LIB:INTERNAL=1
 //ADVANCED property for variable: MAKECOMMAND
 MAKECOMMAND-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: MEMORYCHECK_COMMAND

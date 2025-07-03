@@ -51,7 +51,7 @@ add_library(Taskflow::Taskflow INTERFACE IMPORTED)
 set_target_properties(Taskflow::Taskflow PROPERTIES
   INTERFACE_COMPILE_FEATURES "cxx_std_17"
   INTERFACE_INCLUDE_DIRECTORIES "/workspaces/JohnPhylo/lib/taskflow"
-  INTERFACE_LINK_LIBRARIES "atomic;Threads::Threads"
+  INTERFACE_LINK_LIBRARIES "Threads::Threads"
 )
 
 # This file does not depend on other imported targets which have

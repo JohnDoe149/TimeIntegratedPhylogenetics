@@ -16,8 +16,30 @@ RateMatrix::RateMatrix(Settings settings) :
     RandomVariable& rng = RandomVariable::randomVariableInstance(100);
     #endif 
     #ifndef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance();
+    RandomVariable& rng = RandomVariable::randomVariableInstance(); 
     #endif 
+    for(int i = 0; i < 4; i++){
+        for(int j = 0; j < 4; j++){
+            if(i != j)
+                currentQMatrix(i,j) = 1;
+        }
+    }
+
+    // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
+    std::vector<double> alpha;
+    for(int i = 0; i < 4; i++)
+        alpha.push_back(2.0);
+    Probability::Dirichlet::rv(&rng, alpha, currentStationary);
+    oldStationary = currentStationary;
+    oldQMatrix = currentQMatrix.copy();
+    dirty();
+}
+
+RateMatrix::RateMatrix() : 
+                            currentQMatrix(4, 4, 0.0), oldQMatrix(4, 4, 0.0), 
+                            currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50), rateStepsize(0.3), 
+                            rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0){
+    RandomVariable& rng = RandomVariable::randomVariableInstance(); 
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
             if(i != j)
@@ -30,13 +52,11 @@ RateMatrix::RateMatrix(Settings settings) :
     for(int i = 0; i < 4; i++)
         alpha.push_back(1.0);
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
-
     oldStationary = currentStationary;
-    
     oldQMatrix = currentQMatrix.copy();
-
     dirty();
 }
+
 
 void RateMatrix::accept() {
     oldQMatrix = currentQMatrix.copy();

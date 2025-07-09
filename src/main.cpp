@@ -12,7 +12,9 @@
 #include "modeling/parameters/trees/Node.hpp"
 #include <algorithm>
 #include <chrono>
+
 #include "test.h"
+#include "modeling/model/RandomTree.hpp"
 
 #ifndef TEST
 int main(int argc, char* argv[]) {
@@ -46,53 +48,15 @@ int main(int argc, char* argv[]) {
 
 #ifdef TEST
 int main(int argc, char* argv[]) {
-    Settings settings(argc, argv);
-    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
-    Alignment aln(settings.nexusInput);
-    TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
-    RateMatrix rateMatrix(settings);
-    TreeObject *treeObject = treeParam.getTree();
-    TransitionProbability *transProb = new TransitionProbability(treeObject->getNumNodes());
 
-    // // hijack the Q update with a matrix that is guaranteed to be complex
-    // Matrix<double> Q(4,4,0.0);
-    // Q(0,1) = -1;
-    // Q(1,0) = 1;
-    // Q(2,2) = 2;
-    // Q(2,3) = -3;
-    // Q(3,2) = 3;
-    // Q(3,3) = 2;
-    // Q.print();
-    // transProb->updateQ(Q);
-    // const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
-    // for(Node* n : poSeq){
-    //     int nIndex = n->getIndex();
-    //     if(n != treeObject->getRoot()) {
-    //         n->setNeedsTPUpdate(true); 
-    //         std::vector<double> gammaVec = treeObject->getGammaParams(n);
-
-    //         // inside the setProbs method, we will be able to see the transition matrix p0
-    //         transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
-    //     }
-    //     n->setNeedsTPUpdate(false);
-    //     break;
-    // }
-
-    //force updates to stationary and rate matrix
-    const std::vector<Node*> poSeq = treeObject->getPostOrderSeq();
-    for(int i = 0; i < 30; i ++){
-        Matrix<double> Q = rateMatrix.Q();
-        transProb->updateQ(Q);
-        for(Node* n : poSeq){
-            int nIndex = n->getIndex();
-            if(n != treeObject->getRoot()) {
-                n->setNeedsTPUpdate(true); 
-                std::vector<double> gammaVec = treeObject->getGammaParams(n);
-                transProb->setProbs(0, 0, nIndex, gammaVec[0], gammaVec[1]);
-            }
-            n->setNeedsTPUpdate(false);
-            break;
+    RandomTree randomTree(6, 100);
+    randomTree.genNewData();
+    std::vector<std::vector<int>> allSeq = randomTree.getAllNodeSequences();
+    for(int i = 0; i < allSeq.size(); i++){
+        for(int j = 0; j < allSeq[i].size(); j++){
+            std::cout << allSeq[i][j];
         }
+        std::cout << "\n";
     }
 }
 #endif

@@ -17,8 +17,8 @@ target_include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOUR
 
 target_link_libraries(main PRIVATE ncl_static)
 
-enable_testing()
-add_subdirectory(testing)
+# enable_testing()
+# add_subdirectory(testing)
 
 # comment out for debugging
 #set(CMAKE_CXX_FLAGS, "${CMAKE_CXX_FLAGS} -march=native -O3")

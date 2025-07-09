@@ -11,6 +11,7 @@ class Settings;
 class RateMatrix : public Parameter {
     public:
         RateMatrix(Settings settings);
+        RateMatrix();
         Matrix<double> Q();
         void accept();
         void reject();

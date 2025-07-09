@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "core/Matrix.hpp"
-#include "core/EigenSystem.cpp"
 #include "core/EigenSystem.hpp"
 #include "core/RateEigens.hpp"
 

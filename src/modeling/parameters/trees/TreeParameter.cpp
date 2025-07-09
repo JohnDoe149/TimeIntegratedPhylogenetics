@@ -175,7 +175,7 @@ double TreeParameter::updateTreeMove() {
     // is an internal branch. The additional stipulation is that the ancestor of the internalNode
     // (internalNodeAncestor) cannot be the root
     Node* internalNode = nullptr;
-    Node* internalNodeAncestor = nullptr;
+    Node* internalNodeAncestor = nullptr; 
     do{
         internalNode = nodes[(int)(rng.uniformRv() * nodes.size())];
 

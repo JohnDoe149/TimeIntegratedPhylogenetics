@@ -295,7 +295,7 @@ Matrix<T>::~Matrix(void) {
  * for float and double matrices, but it is handy for int
  * and bool matrices, as well as for matrices of other types
  * that have a sensible operator!= defined.
- *
+ * 
  * \brief Equality operator
  * \param A Matrix to compare (*this) to
  * \return True if (*this)==A, false otherwise.

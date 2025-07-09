@@ -56,7 +56,7 @@ add_library(Taskflow::Taskflow INTERFACE IMPORTED)
 set_target_properties(Taskflow::Taskflow PROPERTIES
   INTERFACE_COMPILE_FEATURES "cxx_std_17"
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include/"
-  INTERFACE_LINK_LIBRARIES "Threads::Threads"
+  INTERFACE_LINK_LIBRARIES "atomic;Threads::Threads"
 )
 
 if(CMAKE_VERSION VERSION_LESS 3.0.0)

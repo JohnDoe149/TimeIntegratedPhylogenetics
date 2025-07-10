@@ -52,11 +52,6 @@ int main(int argc, char* argv[]) {
     RandomTree randomTree(6, 100);
     randomTree.genNewData();
     std::vector<std::vector<int>> allSeq = randomTree.getAllNodeSequences();
-    for(int i = 0; i < allSeq.size(); i++){
-        for(int j = 0; j < allSeq[i].size(); j++){
-            std::cout << allSeq[i][j];
-        }
-        std::cout << "\n";
-    }
+    randomTree.printSequences("test1");
 }
 #endif

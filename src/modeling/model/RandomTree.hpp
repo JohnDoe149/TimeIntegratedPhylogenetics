@@ -20,6 +20,7 @@ class RandomTree {
         std::vector<Node*> getPreorderTrav();
         TreeObject* getTree() {return tree;}
         std::vector<std::vector<int>> getAllNodeSequences(){return allNodeSequences;}
+        int printSequences(std::string fileName);
     private:
         void preorderDescend(std::vector<Node*>& PreOrderTrav, Node* currentNode);
         RateMatrix* rateMatrix;

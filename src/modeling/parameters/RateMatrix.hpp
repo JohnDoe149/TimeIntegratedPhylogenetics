@@ -26,6 +26,7 @@ class RateMatrix : public Parameter {
         int rateCount;
         int stationaryAcceptCount;
         int stationaryCount;
+
         // if 1, rate was selected, if 2, stationary was selected
         int rateOrStationary = 0;
     private:
@@ -38,6 +39,11 @@ class RateMatrix : public Parameter {
 
         std::vector<double> currentStationary;
         std::vector<double> oldStationary;
+
+        double ratePrior;
+        double oldRatePrior;
+        double stationaryPrior;
+        double oldStationaryPrior;
 };
 
 #endif

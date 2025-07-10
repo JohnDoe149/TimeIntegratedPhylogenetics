@@ -21,7 +21,7 @@ Mcmc::Mcmc(Model* m, TreeParameter* t, RateMatrix* rm, Settings& s) :
     treeLog = s.treeOutput;
  
     treeChoice = s.treeWeight;
-    stationaryChoice = treeChoice + s.stationaryWeight;
+    stationaryChoice = treeChoice + s.stationaryWeight; 
     rateChoice = stationaryChoice + s.rateWeight;
 
     model->regenerateLikelihood();

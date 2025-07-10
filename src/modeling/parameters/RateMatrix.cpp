@@ -18,12 +18,7 @@ RateMatrix::RateMatrix(Settings settings) :
     #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance(); 
     #endif 
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
-            if(i != j)
-                currentQMatrix(i,j) = 1;
-        }
-    }
+
 
     // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
     std::vector<double> alpha;
@@ -32,35 +27,66 @@ RateMatrix::RateMatrix(Settings settings) :
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
     oldStationary = currentStationary;
     oldQMatrix = currentQMatrix.copy();
+
+    // set the prior for stationary
+    stationaryPrior = Probability::Dirichlet::lnPdf(alpha, currentStationary);
+
+    // now set the rate matrix
+    ratePrior = 0;
+    for(int i = 0; i < 4; i++){
+        for(int j = i; j < 4; j++){
+            if(i != j){
+                currentQMatrix(i,j) = Probability::Gamma::rv(&rng, 1, 5); 
+                currentQMatrix(j,i) = currentQMatrix(i,j); // mirror for time reversability
+                ratePrior += Probability::Gamma::lnPdf(1, 5, currentQMatrix(i,j));
+            }
+        }
+    }
+    oldStationaryPrior = stationaryPrior;
+    oldRatePrior = ratePrior;
     dirty();
 }
 
 RateMatrix::RateMatrix() : 
-                            currentQMatrix(4, 4, 0.0), oldQMatrix(4, 4, 0.0), 
-                            currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50), rateStepsize(0.3), 
-                            rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0){
-    RandomVariable& rng = RandomVariable::randomVariableInstance(); 
-    for(int i = 0; i < 4; i++){
-        for(int j = 0; j < 4; j++){
-            if(i != j)
-                currentQMatrix(i,j) = 1;
-        }
-    }
+                                   currentQMatrix(4, 4, 0.0), oldQMatrix(4, 4, 0.0), 
+                                   currentStationary(4, -1), oldStationary(4, -1), stationaryAlpha(50), rateStepsize(0.3), 
+                                   rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0){
+
+    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
 
     // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
     std::vector<double> alpha;
     for(int i = 0; i < 4; i++)
-        alpha.push_back(1.0);
+        alpha.push_back(2.0);
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
     oldStationary = currentStationary;
     oldQMatrix = currentQMatrix.copy();
+
+    // set the prior for stationary
+    stationaryPrior = Probability::Dirichlet::lnPdf(alpha, currentStationary);
+
+    // now set the rate matrix
+    ratePrior = 0;
+    for(int i = 0; i < 4; i++){
+        for(int j = i; j < 4; j++){
+            if(i != j){
+                currentQMatrix(i,j) = Probability::Gamma::rv(&rng, 1, 5); 
+                currentQMatrix(j,i) = currentQMatrix(i,j); // mirror for time reversability
+                ratePrior += Probability::Gamma::lnPdf(1, 5, currentQMatrix(i,j));
+            }
+        }
+    }
+    oldStationaryPrior = stationaryPrior;
+    oldRatePrior = ratePrior;
     dirty();
 }
-
 
 void RateMatrix::accept() {
     oldQMatrix = currentQMatrix.copy();
     oldStationary = currentStationary;
+    oldRatePrior = ratePrior;
+    oldStationaryPrior = stationaryPrior;
+
     if(rateOrStationary == 2){
         rateAcceptCount++;
     }
@@ -72,11 +98,13 @@ void RateMatrix::accept() {
 void RateMatrix::reject() {
     currentQMatrix = oldQMatrix.copy();
     currentStationary = oldStationary;
+    ratePrior = oldRatePrior;
+    stationaryPrior = oldStationaryPrior;
     rateOrStationary = 0;
 }
 
 double RateMatrix::lnPrior() {
-    return 0;
+    return stationaryPrior + ratePrior;
 }
 
 // make an update to the rates
@@ -114,7 +142,16 @@ double RateMatrix::updateRates(){
            indexer++;
         }
     }
-    currentQMatrix = Q();
+
+    // calculate prior
+    ratePrior = 0;
+    for(int i = 0; i < 4; i++){
+        for(int j = i; j < 4; j++){
+            if(i != j){
+                ratePrior += Probability::Gamma::lnPdf(1, 5, currentQMatrix(i,j));
+            }
+        }
+    }
     return log_hastings;
 }
 
@@ -139,9 +176,13 @@ double RateMatrix::updateStationary(){
     }
 
     double hastings = Probability::Dirichlet::lnPdf(alphaReverse, currentStationary) - Probability::Dirichlet::lnPdf(alphaForward, z);
-
     currentStationary = z;
 
+    // calculate prior
+    std::vector<double> alphaStat;
+    for(int i = 0; i < 4; i++)
+        alphaStat.push_back(1.0);
+    stationaryPrior = Probability::Dirichlet::lnPdf(alphaStat, currentStationary);
     return hastings;
 }
 
@@ -185,6 +226,7 @@ void RateMatrix::tune(){
     }
     rateAcceptCount = 0;
     rateCount = 0;
+    std::cout << "transitionRate: " << transitionRateRate << "\n";
 
     // we need to modify the stationaryAlpha
     double stationaryRate = (double) stationaryAcceptCount/stationaryCount;

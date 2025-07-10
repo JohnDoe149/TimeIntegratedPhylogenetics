@@ -6,7 +6,10 @@
 #include "modeling/parameters/trees/Node.hpp"
 #include <numbers>
 #include <cmath>
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
 
 /*
 Start by initializing a random topology, random stationary and random rate matrix. numTaxa of 50 with a 
@@ -64,7 +67,6 @@ void RandomTree::genNewData(){
         // now calculate the transition probabilties, e^(rateMatrix * branchlength) using TransitionProbability
         Matrix<double> transProbMatrix(4, 4, 0);
         Matrix<double> preDiag = rateMatrix->Q() * branchLengths[currNode->getIndex()];
-        preDiag.print();
         bool isComplex = eigens->update(preDiag, *rateEigen, *complexRateEigen);
         if(isComplex){
             Matrix<std::complex<double>> diagonalMatrix(4, 4, 0.0);
@@ -89,13 +91,11 @@ void RandomTree::genNewData(){
             for(int i = 0; i < 4; i++){
                 diagonalMatrix(i, i) = rateEigen->eigenvalue[i];
             }
-            diagonalMatrix.print();
 
             // exponentiate diagonalMatrix
             for(int i = 0; i < 4; i++){
                 diagonalMatrix(i, i) = std::pow(M_E, diagonalMatrix(i, i));
             }
-            diagonalMatrix.print();
 
             // get the original matrix back
             Matrix<double> newMatrix = (( (*rateEigen->diagLeftMatrix) * diagonalMatrix)*(*rateEigen->diagRightMatrix));          
@@ -104,7 +104,6 @@ void RandomTree::genNewData(){
         
         int ancIndex = currNode->getAncestor()->getIndex();
         std::vector<int> currNodeAncestorSeq = allNodeSequences[ancIndex]; // get the ancestor sequence
-        transProbMatrix.print();
 
         // now calculate the currentnode's sequence from the transProbMatrix
         std::vector<int> currentSequence;
@@ -161,12 +160,46 @@ void RandomTree::preorderDescend(std::vector<Node*>& preOrderTrav, Node* current
 
     // pushback the current node
     preOrderTrav.push_back(currentNode);
+
+    // next go through the current node's neighbors and recursively call the method
+    // on the current node's descendants
     std::set<Node*>& nodeNeighbors = currentNode->getNeighbors();
     for(Node* n : nodeNeighbors){
         if(n!=currentNode->getAncestor()){
             preorderDescend(preOrderTrav, n);
         }
     }
+}
+
+// a method to output the generated sequence to a file. Returns 1 if there is an error creating the file
+// Outputs a file to the testing folder and if a file with the filename already exists, overwrites it.
+// The parameter fileName should NOT have a format (e.g., .fasta/.txt)
+int RandomTree::printSequences(std::string fileName){
+    std::filesystem::path projectRoot = std::filesystem::current_path();
+    projectRoot = projectRoot.parent_path();
+    std::filesystem::path outputPath = projectRoot / "testing" / "test_data" / (fileName + ".fasta");
+    std::ofstream outFile(outputPath);
+    if (!outFile) {
+        std::cerr << "Error creating file.\n";
+        return 1;
+    }
+    for(int taxaIter = 0; taxaIter < allNodeSequences.size(); taxaIter++){
+        std::vector<int> currentSequence = allNodeSequences[taxaIter];
+        outFile << "Taxa_number_" << taxaIter << "\n";
+        for(int seqIter = 0; seqIter < currentSequence.size(); seqIter++){
+            if(currentSequence[seqIter] == 0){
+                outFile << "A";
+            } else if (currentSequence[seqIter] == 1){
+                outFile << "C";
+            } else if (currentSequence[seqIter] == 2){
+                outFile << "G";
+            } else if (currentSequence[seqIter] == 3){
+                outFile << "T";
+            }   
+        }
+        outFile << "\n";
+    }
+    return 0;
 }
 
 RandomTree::~RandomTree(){

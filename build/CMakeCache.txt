@@ -283,26 +283,6 @@ CTEST_SUBMIT_RETRY_DELAY:STRING=5
 //Maximum time allowed before CTest will kill the test.
 DART_TESTING_TIMEOUT:STRING=1500
 
-//Directory under which to collect all populated content
-FETCHCONTENT_BASE_DIR:PATH=/workspaces/JohnPhylo/build/_deps
-
-//Disables all attempts to download or update content and assumes
-// source dirs already exist
-FETCHCONTENT_FULLY_DISCONNECTED:BOOL=OFF
-
-//Enables QUIET option for all content population
-FETCHCONTENT_QUIET:BOOL=ON
-
-//When not empty, overrides where to find pre-populated content
-// for googletest
-FETCHCONTENT_SOURCE_DIR_GOOGLETEST:PATH=
-
-//Enables UPDATE_DISCONNECTED behavior for all content population
-FETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF
-
-//Enables UPDATE_DISCONNECTED behavior just for population of googletest
-FETCHCONTENT_UPDATES_DISCONNECTED_GOOGLETEST:BOOL=OFF
-
 //Value Computed by CMake
 JohnPhylo_BINARY_DIR:STATIC=/workspaces/JohnPhylo/build
 
@@ -350,8 +330,6 @@ Taskflow_IS_TOP_LEVEL:STATIC=OFF
 
 //Value Computed by CMake
 Taskflow_SOURCE_DIR:STATIC=/workspaces/JohnPhylo/lib/taskflow
-
-gtest_force_shared_crt:BOOL=ON
 
 //Value Computed by CMake
 ncl_BINARY_DIR:STATIC=/workspaces/JohnPhylo/build/lib/ncl

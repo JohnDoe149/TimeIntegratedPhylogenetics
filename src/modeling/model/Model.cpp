@@ -262,6 +262,10 @@ std::string Model::tabularHeader(){
         returnString += "\tPi[" + std::to_string(i) + "]";
     }
 
+    for(int i = 0; i < rateMatrix->transNameOrder().size(); i++){
+        returnString += "\t" + rateMatrix->transNameOrder()[i];
+    }
+
     // print out each node's shape and rate parameters (really each node's ancestor's branch)
     TreeObject *currentTree = tree->getTree();
     for(int index = 0; index < currentTree->getNumOfNodes() - 1; index++){
@@ -281,6 +285,15 @@ std::string Model::tabularOut(int i){
         returnString += "\t" + std::to_string(i);
     }
 
+    // print nucleotide to nucleotide rates
+    Matrix<double> rates = rateMatrix->getRate();
+    for(int i = 0; i < 4; i++){
+        for(int j = i; j < 4; j++){
+            if(i != j){
+                returnString += "\t" + std::to_string(rates(i,j));
+            }
+        }
+    }
     // For each node, print out their gamma params shape and rate
     TreeObject *currentTree = tree->getTree();
     for(int index = 0; index < currentTree->getNumOfNodes()-1; index++){

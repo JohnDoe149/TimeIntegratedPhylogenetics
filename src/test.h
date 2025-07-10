@@ -1,3 +1,3 @@
-#define TEST
+// #define TEST
 // #define TRANSPROB_PRINT
-#define FIXED_TOPOLOGY
+// #define FIXED_TOPOLOGY

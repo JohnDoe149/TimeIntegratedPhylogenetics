@@ -286,14 +286,11 @@ std::string Model::tabularOut(int i){
     }
 
     // print nucleotide to nucleotide rates
-    Matrix<double> rates = rateMatrix->getRate();
-    for(int i = 0; i < 4; i++){
-        for(int j = i; j < 4; j++){
-            if(i != j){
-                returnString += "\t" + std::to_string(rates(i,j));
-            }
-        }
+    std::vector<double> rates = rateMatrix->getRate();
+    for(int i = 0; i < rates.size(); i++){
+        returnString += "\t" + std::to_string(rates[i]);
     }
+
     // For each node, print out their gamma params shape and rate
     TreeObject *currentTree = tree->getTree();
     for(int index = 0; index < currentTree->getNumOfNodes()-1; index++){
@@ -311,6 +308,4 @@ std::string Model::treeHeader(){
 std::string Model::treeOut(int i){
     return std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" + tree->writeNewick() + "\n";
 }
-
-
 

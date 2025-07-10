@@ -5,9 +5,9 @@
 #include <vector>
 
 Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mcmcOutput(""),
-                                              numIterations(50000), printFrequency(10), sampleFrequency(100),
+                                              numIterations(100000), printFrequency(10), sampleFrequency(100),
                                               burnInIterations(10000), tuneFrequency(1000), treeLengthLambda(1.0),
-                                              stationaryWeight(3.0), treeWeight(15.0), rateWeight(3.0), fixedTree("") {
+                                              stationaryWeight(3.0), treeWeight(15.0), rateWeight(6.0), fixedTree("") {
 
     std::vector<std::string> settings;
     for (int i=1; i<argc; i++) {

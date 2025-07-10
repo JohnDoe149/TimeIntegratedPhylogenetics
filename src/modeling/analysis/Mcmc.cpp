@@ -67,7 +67,7 @@ void Mcmc::burnin(){
         }
         else {
             updater = [this]() { return rateMatrix->updateRates(); };
-            gibbsUpdates = 2;
+            gibbsUpdates = 6;
         }
 
         // Now use the gibbs sampler 
@@ -147,7 +147,7 @@ void Mcmc::run(){
         }
         else {
             updater = [this]() { return rateMatrix->updateRates(); };
-            gibbsUpdates = 2;
+            gibbsUpdates = 6;
         }
 
         // Now use the gibbs sampler 

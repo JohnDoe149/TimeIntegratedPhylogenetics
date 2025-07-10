@@ -17,7 +17,7 @@ sequenceLength of 200 is a good start.
 */
 RandomTree::RandomTree(int numTaxa, int characterStateCount) 
     : numTaxa(numTaxa), tree(new TreeObject(numTaxa)), transProb(new TransitionProbability(numTaxa)), 
-      rateMatrix(new RateMatrix()), expRateParam(1.1), characterStateCount(characterStateCount), rng(RandomVariable::randomVariableInstance(100)),
+      rateMatrix(new RateMatrix()), expRateParam(1.1), characterStateCount(characterStateCount), rng(RandomVariable::randomVariableInstance()),
       allNodeSequences(numTaxa * 2 - 1) 
       {
     

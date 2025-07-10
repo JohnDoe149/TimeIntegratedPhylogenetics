@@ -5,7 +5,7 @@
 #include <vector>
 
 Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mcmcOutput(""),
-                                              numIterations(100000), printFrequency(10), sampleFrequency(100),
+                                              numIterations(50000), printFrequency(10), sampleFrequency(100),
                                               burnInIterations(10000), tuneFrequency(1000), treeLengthLambda(1.0),
                                               stationaryWeight(3.0), treeWeight(15.0), rateWeight(6.0), fixedTree("") {
 

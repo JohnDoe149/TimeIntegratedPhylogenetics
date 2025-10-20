@@ -1,0 +1,38 @@
+        data <- readDiscreteCharacterData(file="0tipSequence.fasta")
+        moves = VectorMoves()
+
+        num_sites <- data.nchar()
+        data_taxa <- data.taxa() 
+        num_taxa <- data.ntaxa()
+        n_branches <- 2 * num_taxa - 3
+        tree_topology ~ dnUniformTopologyBranchLength(data_taxa, dnExponential(10.0))
+
+        # Exchange rates
+        er ~ dnDirichlet(v(1,1,1,1,1,1))
+
+        # Base frequencies
+        pi ~ dnDirichlet(v(1,1,1,1))
+
+        # Create a GTR rate matrix
+        Q := fnGTR(er, pi)
+
+        phySeq ~ dnPhyloCTMC(tree=tree_topology, Q=Q, type="DNA")
+        phySeq.clamp(data)
+
+        # Set up proposals, stationary, rates, branch lengths, and topology
+        moves.append(mvSimplexElementScale(er, alpha=10.0, tune=TRUE, weight=3.0))
+        moves.append(mvSimplexElementScale(pi, alpha=10.0, tune=TRUE, weight=3.0))
+        moves.append(mvNNI(tree_topology, weight=8.0))
+        moves.append( mvBranchLengthScale(tree_topology, weight=8.0, tune=true) )
+        
+        # Monitors
+        monitors = VectorMonitors()
+        monitors.append(mnModel(filename="output/taxa50diam0.25siteCount800/rb0tipSequence.log", printgen=10, exclude=["F"]))
+        monitors.append(mnFile(filename="output/taxa50diam0.25siteCount800/rb0tipSequence.tree", printgen=10, tree_topology))
+
+        # Run MCMC
+        mymodel = model(tree_topology)
+        mymcmc = mcmc(mymodel, moves, monitors)
+        mymcmc.burnin(generations=10000, tuningInterval=100)
+        mymcmc.run(generations=50000)
+        q()

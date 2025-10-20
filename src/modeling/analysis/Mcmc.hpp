@@ -28,7 +28,8 @@ class Mcmc{
         std::string analysisLog;
         std::string treeLog;
 
-        double treeChoice;
+        double branchChoice;
+        double topologyChoice;
         double stationaryChoice;
         double rateChoice;
 

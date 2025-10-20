@@ -30,8 +30,8 @@ class EigenSystem {
                                 EigenSystem(int dim);                                                                                  //!< construct the eigenvalue decomposition
                                ~EigenSystem(void);                                                                                                       //!< destructor
         double                  getDeterminant(std::vector<double> realEigenValues);                                                                                                    //!< return determinant
-        bool                    update(const Matrix<double>& m, RateEigen& eigens, ComplexRateEigen& complexEigens);                                                                                       //!< update the eigensystem for matrix m
-
+        bool                    update(const Matrix<double>& m, RateEigen& eigens, ComplexRateEigen& complexEigens);                                                                                      //!< update the eigensystem for matrix m
+        
     private:
         int                     n;                                                                                                                                         //!< row and column dimension (square matrix)
         void                    allocateComplexEigenvectors(void);                                                                                       //!< allocate space for complex eigenvectors
@@ -50,4 +50,3 @@ class EigenSystem {
 };
 
 #endif
-

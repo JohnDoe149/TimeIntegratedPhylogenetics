@@ -4,9 +4,6 @@
 #include <complex>
 #include <vector>
 
-
-
-
 /* The constructor allocates space for the eigensystem, calculates it from
    the input matrix, and then stores it so that the components can be
    retrieved when needed. This constructor returns an empty Eigensystem
@@ -350,7 +347,6 @@ void EigenSystem::elmhes(int low, int high, Matrix<double>& a, std::vector<int>&
 
 /* This function copies the Hessenberg matrix stored in 'a' to 'h'. */
 void EigenSystem::elmtrans(int low, int high, Matrix<double> &a, std::vector<int> &perm, Matrix<double> &h) {
-	
 	for (int i=0; i<n; i++)
 		{
 		for (int k=0; k<n; k++) 
@@ -1043,7 +1039,6 @@ int EigenSystem::luDecompose(Matrix<double>& a, double* vv, int* indx, double* p
 }
 
 bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRateEigen& complexEigens) {
-	
 	Matrix<double> eigenVectors(n, n, 0.0);
 	Matrix<double> inverseEigenVectors(n, n, 0.0);
 	std::vector<double> realEigenValues(n, 0.0);
@@ -1055,7 +1050,7 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	if (A.dim1() != n || A.dim2() != n)
 		return (1);
 	
-	// balance the n X n matrix
+	// balance the n X n matrix 
 	int low = 0, high = 0;
 	std::vector<double> scale(n);
 	balance(A, scale, &low, &high);
@@ -1065,12 +1060,15 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	elmhes(low, high, A, cnt);
 	
 	// initialize the eigenvectors
+	// johncom: for functional purposes, it just seems to efficiently copy the hessenberg matrix A to eigenvectors
 	elmtrans(low, high, A, cnt, eigenVectors);
 	
 	// compute eigenvalues and eigenvectors
 	hqr2(low, high, A, realEigenValues, imaginaryEigenValues, eigenVectors);
 	
 	// reverse balancing to obtain eigenvectors
+	// johncom: earlier we scaled all rows to be between 0 and 1 for computation, this does not affect the eigenvalues
+	// but certainly changes the eigenvectors, rescale to get the eigenvectors with respect to the original matrix
 	balback(low, high, scale, eigenVectors);
 
 	// checks whether there are complex eigenvalues
@@ -1086,15 +1084,16 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 	if (isComplex == false) {
 		A.inject(eigenVectors);
 		invertMatrix(A, inverseEigenVectors);
+
+		// johncom: now modify rateEigen's to hold the eigenvalues and eigenvectors we found
 		for(int i = 0; i < n; i++){
 			eigens.eigenvalue[i] = realEigenValues[i];
 		}
 
-		double* pc = eigens.c_ijk;
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				for (int k=0; k<n; k++)
-					*(pc++) = eigenVectors(i, k) * inverseEigenVectors(k, j);
+		// A and inverseEigenVectors are the left and right hand side of the diagonalized form respectively
+		eigens.diagLeftMatrix->inject(eigenVectors);
+		eigens.diagRightMatrix->inject(inverseEigenVectors);
+
     }
 	else {
 		Matrix<complexNum> complexEigenVectors(n,n);
@@ -1133,13 +1132,10 @@ bool EigenSystem::update(const Matrix<double> &m, RateEigen& eigens, ComplexRate
 				}
 			complexEigens.ceigenvalue[i] = complexNum(realEigenValues[i], imaginaryEigenValues[i]);
         }
-		invertComplexMatrix(complexEigenVectors, complexInverseEigenVectors);
 
-		std::complex<double>* pc = complexEigens.cc_ijk;
-		for (int i=0; i<n; i++)
-			for (int j=0; j<n; j++)
-				for (int k=0; k<n; k++)
-					*(pc++) = complexEigenVectors(i, k) * complexInverseEigenVectors(k, j);
+		complexEigens.cDiagLeftMatrix->inject(complexEigenVectors);
+		invertComplexMatrix(complexEigenVectors, complexInverseEigenVectors);
+		complexEigens.cDiagRightMatrix->inject(complexInverseEigenVectors);
     }
 
 	return isComplex;

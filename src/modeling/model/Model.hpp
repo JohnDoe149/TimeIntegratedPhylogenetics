@@ -44,7 +44,6 @@ class Model {
         int numChar;
         int numNodes;
         bool* activeTP;
-        bool* activeCL;
         tf::Executor executor;
         RateMatrix* rateMatrix;
         Alignment* aln;

@@ -5,6 +5,7 @@
 #include <iomanip> 
 #include <cstdlib> 
 #include <cstring>
+#include <complex>
  
 // We need to forward declare some stuff
 template <class T>
@@ -76,6 +77,7 @@ public:
 		int   			dim2(void) const { return n; }                    //!< number of columns 
 		T*   			expose(void) { return v; }
 		int   			getRefCount(void) const { return *refCount; }     //!< get the number of matrices that share the same data 
+		void			print() const;
 
 	private: 
 		T*				v; 
@@ -92,7 +94,31 @@ template <class T> bool        operator!=(const Matrix<T> &A, const Matrix<T> &B
 
 // Definitions of inlined member functions
 
-/*!
+/* This method prints out the calling Matrix<T> in a clean way. Mainly used to easily see the elements of a Matrix<T> 
+   and to debug. NOTE: This method assumes that the Matrix element data type is either double or complex.*/
+template <class T>
+void Matrix<T>::print() const {
+	for(int row = 0; row < m; row++){
+		for(int col = 0; col < n; col++){
+			
+			// use constexpr to push logic to compiletime
+			if constexpr (std::is_same_v<T, std::complex<double>>){
+				std::complex<double> num = v[row * n + col];
+				double real = num.real();
+				double imag = num.imag();
+				int realPrecis = (real < 0) ? 2 : 3;
+				std::cout << num;
+			}
+			else if (std::is_same_v<T, double>){
+				double num = v[row * n + col];
+				int precis = (num < 0) ? 4 : 5;
+				std::cout << std::fixed << std::setprecision(precis) << num << " ";
+			}
+		}
+		std::cout << "\n";
+	}
+}
+	/*!
  * Copy constructor, which creates a shallow copy of the
  * MbMatrix argument. Matrix data are not copied but shared.
  * Thus, in MbMatrix B(A), subsequent changes to A will be
@@ -267,7 +293,7 @@ Matrix<T>::~Matrix(void) {
  * for float and double matrices, but it is handy for int
  * and bool matrices, as well as for matrices of other types
  * that have a sensible operator!= defined.
- *
+ * 
  * \brief Equality operator
  * \param A Matrix to compare (*this) to
  * \return True if (*this)==A, false otherwise.

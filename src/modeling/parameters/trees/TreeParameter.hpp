@@ -11,28 +11,34 @@ class TreeParameter : public Parameter{
         ~TreeParameter();
         TreeObject* getTree(){return trees[0];}
 
+        // For making topology changes with NNI
+        double updateTreeMove();
+
+        // for making length changes t
+        double updateTreeGamma();
         void accept();
         void reject();
-
-        double update();
         void tune();
-        double lnPrior();
+        double lnPrior(){return currentPrior;}
 
         std::string writeNewick() {return trees[0]->getNewick();}
 
-
-        int branchCount;
-        int branchAcceptCount;
-        int treeCount; 
-        int treeAcceptCount;
+        int shapeCount;
+        int shapeAcceptCount;
+        int rateCount;
+        int rateAcceptCount;
     private:
         bool fixedTree;
         int moveChoice;
-        double branchDelta;
-        double treeAlpha;
+        double shapeDelta;
+        double rateDelta;
         double lambda;
         double currentPrior;
         double oldPrior;
+        double shapePriorRate;
+        double ratePriorRate;
+        double shapePriorShape;
+        double ratePriorShape;
         TreeObject* trees[2];
 };
 

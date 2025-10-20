@@ -6,6 +6,7 @@
 #include "core/Alignment.hpp"
 #include <iostream>
 #include <cmath>
+#include "test.h"
 
 /*
 =======================================================================
@@ -14,12 +15,11 @@
 */
 
 TreeObject::TreeObject(int nt) : numTaxa(nt) {
-
     RandomVariable& rng = RandomVariable::randomVariableInstance();
 
     root = addNode();
     root->setName("Root");
-    for(int i = 0; i < 3; i++) {
+    for(int i = 0; i < 2; i++) {
         Node* p = addNode();
         p->setName("Taxon_" + std::to_string(i+1));
         p->setIsTip(true);
@@ -30,7 +30,7 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
     }
 
     // build up the full tree by randomly adding branches to the existing tree
-    for(int i = 3; i < numTaxa; i++){
+    for(int i = 2; i < numTaxa; i++){
         Node* p = nullptr;
         do {
             p = nodes[(int)(rng.uniformRv() * nodes.size())];
@@ -62,13 +62,6 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
     // initialize the down pass sequence
     initPostOrder();
 
-    // Initialize branch lengths
-    for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
-        Node* p = postOrderSeq[i];
-        if (p->getAncestor() != nullptr)
-                this->setBranchLength(p, Probability::Exponential::rv(&rng, 20));
-    }
-
     // index the interior nodes (the tip nodes are indexed, above)
     int intIdx = numTaxa;
     for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
@@ -76,6 +69,8 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
         if (p->getIsTip() == false)
             p->setIndex(intIdx++);
     }
+    std::vector<double> zero_vec(numTaxa*2-2, 1.0);
+    branchLengths = zero_vec;
 }
 
 //Generate a random tree and connect it to an alignment
@@ -83,89 +78,8 @@ TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
 
     std::vector<std::string> names = aln->getTaxaNames();
     for(Node* n : postOrderSeq){
-        if(n->getIsTip())
+        if(n->getIsTip()){
             n->setName(names[n->getIndex()]);
-    }
-    
-}
-
-//Change to match index to taxon name
-TreeObject::TreeObject(std::string newick, std::vector<std::string> taxaNames){
-    std::vector<std::string> tokens = parseNewickString(newick);
-
-    Node* p = nullptr;
-    bool readingBranchLength = false;
-
-    numTaxa = 0;
-
-    for(std::string tok : tokens){
-        if(tok == "("){
-            Node* newNode = addNode();
-            if(p == nullptr)
-                root = newNode;
-            else{
-                p->addNeighbor(newNode);
-                newNode->addNeighbor(p);
-                newNode->setAncestor(p);
-                setBranchLength(newNode, 0.0);
-            }
-
-            p = newNode;
-        }
-        else if(tok == ")" || tok == ","){
-            if(p->getAncestor() != nullptr)
-                p = p->getAncestor();
-            else
-                Msg::error("Poorly formatted Newick! -P should not be null.");
-        }
-        else if(tok == ":"){
-            readingBranchLength = true;
-        }
-        else if(tok == ";"){
-            if(p != root)
-                Msg::error("Poorly formatted Newick! Did not end at root.");
-        }
-        else{
-            if(readingBranchLength){
-                double x = atof(tok.c_str());
-                setBranchLength(p, x);
-            }
-            else{
-                //We need to trim the white space at the beginning and end of the token
-                while(tok[0] == ' ')
-                    tok.erase(0,1);
-                while(tok[tok.size()-1] == ' ')
-                    tok.erase(tok.size()-1);
-
-
-                Node* newNode = addNode();
-                p->addNeighbor(newNode);
-                newNode->addNeighbor(p);
-                newNode->setAncestor(p);
-                newNode->setName(tok);
-                newNode->setIsTip(true);
-                setBranchLength(newNode, 0.0);
-
-                int taxonIndex = getTaxonIndex(tok, taxaNames);
-                if(taxonIndex == -1)
-                    Msg::error("Token '" + tok + "' is not in taxa names");
-                newNode->setIndex(taxonIndex);
-
-                p = newNode;
-                numTaxa++;
-            }
-            readingBranchLength = false;
-        }
-    }
-    initPostOrder();
-    
-    if(numTaxa != taxaNames.size())
-        Msg::error("Taxa names do not match the size of the newick string.");
-
-    int idx = numTaxa;
-    for(Node* n : postOrderSeq){
-        if(n->getIsTip() == false){
-            n->setIndex(idx++);
         }
     }
 }
@@ -207,7 +121,7 @@ void TreeObject::clone(const TreeObject& t){
         for(int i = 0; i < t.nodes.size(); i++)
             addNode();
     }
-    this->branchLengths.clear();
+    this->branchGamma.clear();
 
     this->numTaxa = t.numTaxa;
     this->root = this->nodes[t.root->getOffset()];
@@ -228,9 +142,9 @@ void TreeObject::clone(const TreeObject& t){
 
         if(q->getAncestor() != nullptr){
             Node* ancestor = this->nodes[q->getAncestor()->getOffset()];
-            double bl = t.getBranchLength(q);
+            std::vector<double> gp = t.getGammaParams(q);
             p->setAncestor(ancestor);
-            this->setBranchLength(p, bl);
+            this->setGammaDist(p, gp[0], gp[1]);
         }
         else
             p->setAncestor(nullptr);
@@ -249,35 +163,41 @@ void TreeObject::deleteAllNodes(){
     nodes.clear();
 }
 
-void TreeObject::setBranchLength(Node* n, double length){
-    auto it = branchLengths.find(n);
+void TreeObject::setGammaDist(Node* n, double shape, double rate){
+    std::vector<double> gammaParams;
+    gammaParams.push_back(shape);
+    gammaParams.push_back(rate);
+    auto it = branchGamma.find(n);
 
-    if(it == branchLengths.end())
-        branchLengths.insert(std::make_pair(n, length));
+    if(it == branchGamma.end())
+        branchGamma.insert(std::make_pair(n, gammaParams));
     else
-        it->second = length;
+        it->second = gammaParams;
 }
 
-double TreeObject::getBranchLength(Node* n) const{
-    auto it = branchLengths.find(n);
 
-    if(it == branchLengths.end())
-        Msg::error("Couldn't find branch length of pair");
+std::vector<double> TreeObject::getGammaParams(Node* n) const{
+    auto it = branchGamma.find(n);
+
+    if(it == branchGamma.end())
+        Msg::error("Couldn't find GammaParams for this node");
     return it->second;
 }
 
-std::vector<double> TreeObject::getBranchLengths(){
-    std::vector<double> returnVec;
-    returnVec.reserve(branchLengths.size());
+std::vector<std::vector<double>> TreeObject::getGammas(){
+    std::vector<std::vector<double>> returnVec;
+    returnVec.reserve(branchGamma.size());
 
-    for (auto s : branchLengths)
-        returnVec.push_back(s.second);
+    for (auto v: branchGamma){
 
+        // load all the gamma vectors into returnVec
+        returnVec.push_back(v.second);
+    }
     return returnVec;
 }
 
-std::map<Node*, double> TreeObject::getBranchLengthMapping(){
-    return branchLengths;
+std::map<Node*, std::vector<double>> TreeObject::getGammaMap(){
+    return branchGamma;
 }
 
 std::string TreeObject::getNewick() const{
@@ -379,7 +299,8 @@ void TreeObject::showNode(Node* p, int indent) const{
     std::cout << ") ";
 
     if(p->getAncestor() != nullptr)
-        std::cout << this->getBranchLength(p) << " ";
+        // FIX THIS LATER
+        //<< this->getBranchLength(p) << " ";
 
     std::cout << p->getName();
 
@@ -402,6 +323,45 @@ void TreeObject::updateAll(){
     }
 }
 
+//special helper method for making all node's name their index for easy debugging
+void TreeObject::setNodeNameIndex(){
+    initPostOrder();
+
+    // Initialize branch lengths
+    for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
+        Node* p = postOrderSeq[i];
+        p->setName("Taxa" + std::to_string(p->getIndex()));
+    }
+}
+
+/* This method exists to allow a way to quicky get a node via its index. Mainly created to create a traceplot for a given node
+   if the index is negative or greater than the number of nodes, this method returns null*/
+Node* TreeObject::getNodeWithIndex(int index) {
+    if(index < 0 || index > nodes.size()){
+        return nullptr;
+    }
+    for(Node* node :nodes){
+        if(node->getIndex() == index){
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+void TreeObject::flipAllTPs(){
+    for(Node* n : nodes){
+        n->setNeedsTPUpdate(true);
+    }
+}
+
+void TreeObject::flipAllCLs(){
+    for(Node* n : nodes){
+        if(!n->getIsTip()){
+            n->setNeedsCLUpdate(true);
+        }
+    }
+}
+
 //For outputting a newick string
 void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     if(p == nullptr)
@@ -410,7 +370,8 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     if(!p->getIsTip())
         strm << "(";
     else
-        strm << p->getName() << "[&index=" << p->getIndex() << "]";
+        strm << p->getName(); 
+        // << "[&index=" << p->getIndex() << "]";
 
     std::set<Node*>& pDesc = p->getNeighbors();
     bool foundFirst = false;
@@ -424,9 +385,13 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     }
 
     if(!p->getIsTip())
-        strm << ")[&index=" << p->getIndex() << "]";
+        strm << ")";
+    // if(!p->getIsTip())
+    //     strm << ")" << p->getName() <<"[&index=" << p->getIndex() << "]";
     if(p->getAncestor() != nullptr)
-        strm << ":" << this->getBranchLength(p);
+        strm << ":" << branchLengths[p->getIndex()];
     else
-        strm << ":0.0;";
+        strm << ":0.1;";
 }
+
+

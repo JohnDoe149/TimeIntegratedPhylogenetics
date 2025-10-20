@@ -5,22 +5,25 @@
 #include <vector>
 
 Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mcmcOutput(""),
-                                              numIterations(50000), printFrequency(10), sampleFrequency(100),
-                                              burnInIterations(10000), tuneFrequency(1000), treeLengthLambda(1.0),
-                                              stationaryWeight(3.0), treeWeight(15.0), rateWeight(0.0), fixedTree("") {
+                                              numIterations(100000), printFrequency(10), sampleFrequency(10),
+                                              burnInIterations(10000), tuneFrequency(100), treeLengthLambda(1.0),
+                                              stationaryWeight(6.0), branchWeight(15.0), topologyWeight(15.0), rateWeight(8.0), fixedTree("") {
 
     std::vector<std::string> settings;
     for (int i=1; i<argc; i++) {
-        std::string arg = argv[i];
+        std::string arg = argv[i]; 
         settings.push_back(arg);
     }
 
     settings.push_back("-nexus");
-    settings.push_back("/workspaces/RobustPhylo/res/replicase.nex");
+    settings.push_back("/workspaces/JohnPhylo/validation/TIP_testing_data/taxa50diam0.250000siteCount800/0tipSequence.fasta");
+    // settings.push_back("/workspaces/JohnPhylo/res/replicase.nex");
     settings.push_back("-treeOut");
-    settings.push_back("/workspaces/RobustPhylo/res/trees.trees");
+    settings.push_back("/workspaces/JohnPhylo/validation/mixTree.tree");
+    // settings.push_back("/workspaces/JohnPhylo/res/trees.trees");
     settings.push_back("-mcmcOut");
-    settings.push_back("/workspaces/RobustPhylo/res/analysis.log");
+    settings.push_back("/workspaces/JohnPhylo/validation/mixTree.log");
+    // settings.push_back("/workspaces/JohnPhylo/res/analysis.log");
 
     if (settings.size() == 0) {
         usage();
@@ -54,8 +57,10 @@ Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mc
                 stationaryWeight = stod(settings[i]);
             else if (currentArg == "-rateWeight")
                 rateWeight = stod(settings[i]);
-            else if (currentArg == "-treeWeight")
-                treeWeight = stod(settings[i]);
+            else if (currentArg == "-branchWeight")
+                branchWeight = stod(settings[i]);
+            else if (currentArg == "-topologyWeight")
+                topologyWeight = stod(settings[i]);
             else if (currentArg == "-fixedTree")
                 fixedTree = settings[i];
             else{
@@ -93,7 +98,8 @@ void Settings::print(){
     std::cout << "   * -sampleFreq        : " << sampleFrequency << std::endl;
     std::cout << "   * -burnInIter        : " << burnInIterations << std::endl;
     std::cout << "   * -tuneFreq          : " << tuneFrequency << std::endl;
-    std::cout << "   * -treeWeight        : " << treeWeight << std::endl;
+    std::cout << "   * -topologyWeight    : " << topologyWeight << std::endl;
+    std::cout << "   * -branchWeight      : " << branchWeight << std::endl;
     std::cout << "   * -stationaryWeight  : " << stationaryWeight << std::endl;
     std::cout << "   * -rateWeight        : " << rateWeight << std::endl;
     std::cout << std::endl;

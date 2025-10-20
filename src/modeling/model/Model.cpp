@@ -15,6 +15,7 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include <thread>
 //#include <chrono>
 
 Model::Model(Settings s, Alignment* a, TreeParameter* t, RateMatrix* m) : 
@@ -33,13 +34,11 @@ Model::Model(Settings s, Alignment* a, TreeParameter* t, RateMatrix* m) :
     numNodes = tree->getTree()->getNumNodes();
 
     int flagWidths = 2 * numNodes;
-    activeCL = new bool[flagWidths];
     activeTP = new bool[flagWidths];
     for(int i = 0; i < flagWidths; i++){
-        activeCL[i] = false;
         activeTP[i] = false;
     }
-    postOrder = new ConditionalLikelihood(aln, numNodes, 1);
+    postOrder = new ConditionalLikelihood(aln, numNodes);
     transProb = new TransitionProbability(numNodes);
 
     int rescaleWidth = numNodes*numChar;
@@ -53,7 +52,6 @@ Model::~Model(){
     delete postOrder;
     delete transProb;
     delete [] rescaling;
-    delete [] activeCL;
     delete [] activeTP;
 }
 
@@ -61,7 +59,6 @@ void Model::accept() {
     oldLikelihood = currentLikelihood;
 
     for(int i = 0; i < numNodes; i++){
-        activeCL[i + numNodes] = activeCL[i];
         activeTP[i + numNodes] = activeTP[i];
     }
 
@@ -76,14 +73,13 @@ void Model::accept() {
         rateMatrix->clean();
     }
 
-    transProb->accept();
+    transProb->updateQ(rateMatrix->Q());
 }
 
 void Model::reject() {
     currentLikelihood = oldLikelihood;
 
     for(int i = 0; i < numNodes; i++){
-        activeCL[i] = activeCL[i + numNodes];
         activeTP[i] = activeTP[i + numNodes];
     }
 
@@ -98,36 +94,41 @@ void Model::reject() {
         rateMatrix->clean();
     }
 
-    transProb->reject();
+    transProb->updateQ(rateMatrix->Q());
 }
 
 double Model::lnPrior(){
     return tree->lnPrior() + rateMatrix->lnPrior();
 }
 
+// This method is called mainly when certain model parameters have changed (such as the rate matrix) to recalculate
+// the ConditionalLikelihood of the tree. The calculation relies on having the transition probability of each node,
+// So this method also checks each node that needs to have its transition probability recalculated.
 void Model::regenerateLikelihood(){
-    TreeObject* activeT = tree->getTree();
+    TreeObject* activeT = tree->getTree(); 
 
     const std::vector<Node*> poSeq = activeT->getPostOrderSeq();
 
     //std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     if(rateMatrix->isDirty()){
-        activeT->updateAll();
-        transProb->updateQ(rateMatrix->Q(), 0);
+        activeT->updateAll(); // updateAll sets all nodes are not the tip to have their CL updated and all nodes to have TP updated
+        transProb->updateQ(rateMatrix->Q());
     }
 
     //std::chrono::steady_clock::time_point rateTime = std::chrono::steady_clock::now();
     //std::cout << "Rate computation was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(rateTime - begin).count() << "[milliseconds]" << std::endl;
 
+    // for each node, check if they need a Transition Probability update, if so recalculate their transition
+    // probability and find the node's activeIndex to determine which buffer to use.
     for(Node* n : poSeq){
         int nIndex = n->getIndex();
         if(n->getNeedsTPUpdate() == true){
             if(n != activeT->getRoot()) {
-                double v = activeT->getBranchLength(n);
+                std::vector<double> gammaVec = activeT->getGammaParams(n);
                 activeTP[nIndex] ^= true;
                 bool activeIndex = activeTP[nIndex];
-                transProb->setProbs(activeIndex, 0, nIndex, v);
+                transProb->setProbs(activeIndex, 0, nIndex, gammaVec[0], gammaVec[1]);
             }
             n->setNeedsTPUpdate(false);
         }
@@ -136,38 +137,40 @@ void Model::regenerateLikelihood(){
     //std::chrono::steady_clock::time_point probsTime = std::chrono::steady_clock::now();
     //std::cout << "Probs computation was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(probsTime - rateTime).count() << "[milliseconds]" << std::endl;
 
-    for(Node* n : poSeq){
-        if(n->getNeedsCLUpdate() == true){
-            activeCL[n->getIndex()] ^= true; // Flip this ahead of time
-        }
-    }
+    // for(Node* n : poSeq){
+    //     if(n->getNeedsCLUpdate() == true){
+    //         activeCL[n->getIndex()] ^= true; // Flip this ahead of time
+    //     }
+    // }
 
+    // CL likelihood calculation, split the alignment into 100 site chunks to parallelize
     tf::Taskflow phyloTaskflow;
-    
-    int chunkSize = 100;
-    for(int range = 0; range < (int)std::ceil((double)numChar / chunkSize); range++){
-        int start = range * chunkSize;
+    const auto processor_count = std::thread::hardware_concurrency();
+    int chunkSize = (int)std::ceil((double)numChar/processor_count);
+    for(int range = 0; range < processor_count; range++){ 
+        int start = range * chunkSize; 
         int end = start + chunkSize-1;
         end = std::min(end, numChar-1);
 
-        phyloTaskflow.emplace([this, &poSeq, start, end](){
+        phyloTaskflow.emplace([this, &poSeq, start, end](){ //define thread behavior
             int currentChunkSize = end - start + 1;
-            for(Node* n : poSeq){
+            for(Node* n : poSeq){ // iterate through each node in post order to go from tips to the root
                 int nIndex = n->getIndex();
-                if(n->getNeedsCLUpdate() == true){
-                    double* pNN = (*postOrder)(nIndex, activeCL[nIndex], 0) + start * stateSpace;
-                    std::fill(pNN, pNN + (currentChunkSize * stateSpace), 1.0);
+                if(n->getIsTip() == false){
+                    double* pNN = (*postOrder)(nIndex) + start * stateSpace; // get the array that stores the CLs for each site for the specific node
+                    std::fill(pNN, pNN + (currentChunkSize * stateSpace), 1.0); // fill the array with 1.0s the clear it ot
 
                     std::set<Node*>& nNeighbors = n->getNeighbors();
-                    for(Node* d : nNeighbors){
+                    for(Node* d : nNeighbors){ // once we have a node that needs to be updated, pull from its children to calculate its new CL for each site
                         if(d != n->getAncestor()){
                             int dIndex = d->getIndex();
                             double* pN = pNN;
-                            double* pD = (*postOrder)(dIndex, activeCL[dIndex], 0) + start * stateSpace;
-                            
+                            double* pD = (*postOrder)(dIndex) + start * stateSpace;
                             const Matrix<double>& P = (*transProb)(activeTP[dIndex], 0, dIndex);
+
+                            // go through each site in the chunk
                             for(int c = 0; c < currentChunkSize; c++){
-                                for(int i = 0; i < stateSpace; i++){
+                                for(int i = 0; i < stateSpace; i++){ //state space is ATCG
                                     double sum = 0.0;
                                     for(int j = 0; j < stateSpace; j++){
                                         sum += P(i, j) * pD[j];
@@ -190,14 +193,12 @@ void Model::regenerateLikelihood(){
                                 max = *pNN;
                             pNN++;
                         }
-                        if(max < 1e-10){
-                            pNN -= stateSpace;
-                            for(int i = 0; i < stateSpace; i++){
-                                *pNN /= max;
-                                pNN++;
-                            }
-                            *rescalePointer = std::log(max);
+                        pNN -= stateSpace;
+                        for(int i = 0; i < stateSpace; i++){
+                            *pNN /= max;
+                            pNN++;
                         }
+                        *rescalePointer = std::log(max);
                         rescalePointer++;
                     }
                 }
@@ -206,12 +207,9 @@ void Model::regenerateLikelihood(){
     }
     executor.run(phyloTaskflow).wait();
 
-    // Mark everything updated
-    for(Node* n : poSeq)
-        n->setNeedsCLUpdate(false);
 
     int rIndex = activeT->getRoot()->getIndex();
-    double* pR = (*postOrder)(rIndex, activeCL[rIndex], 0);
+    double* pR = (*postOrder)(rIndex);
     std::vector<double> f = rateMatrix->getStationary();
     double lnL = 0.0;
 
@@ -237,20 +235,35 @@ void Model::regenerateLikelihood(){
     //std::cout << "Pruning was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(pruneTime - probsTime).count() << "[milliseconds]" << std::endl;
 }
 
+// This method called this current object's tree and rateMatrix and asks them to tune.
 void Model::tuneMoves(){
     tree->tune();
     rateMatrix->tune();
 }
 
+// This method when called returns a string to serve as a  header that contains all of the parameters used
+// in the model
 std::string Model::tabularHeader(){
     std::string returnString = "Iteration\tPosterior\tLikelihood\tTree Prior";
     for(int i = 0; i < stateSpace; i++){
         returnString += "\tPi[" + std::to_string(i) + "]";
     }
 
+    for(int i = 0; i < rateMatrix->transNameOrder().size(); i++){
+        returnString += "\t" + rateMatrix->transNameOrder()[i];
+    }
+
+    // print out each node's shape and rate parameters (really each node's ancestor's branch)
+    // TreeObject *currentTree = tree->getTree();
+    // for(int index = 0; index < currentTree->getNumOfNodes() - 1; index++){
+    //     returnString +=  "\tnode" + std::to_string(index) +"shape\tnode" + std::to_string(index) + "rate"; 
+    // }
+
     return returnString + "\n";
 }
 
+// This method when called returns a string that prints out the values of each parameter. Parameters
+// include each branch's gamma parameters, the stationary distribution, likelihood and etc.
 std::string Model::tabularOut(int i){
     std::string returnString = std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" +
                                std::to_string(currentLikelihood) + "\t" + std::to_string(tree->lnPrior());
@@ -259,6 +272,19 @@ std::string Model::tabularOut(int i){
         returnString += "\t" + std::to_string(i);
     }
 
+    // print nucleotide to nucleotide rates
+    std::vector<double> rates = rateMatrix->getRate();
+    for(int i = 0; i < rates.size(); i++){
+        returnString += "\t" + std::to_string(rates[i]);
+    }
+
+    // For each node, print out their gamma params shape and rate
+    // TreeObject *currentTree = tree->getTree();
+    // for(int index = 0; index < currentTree->getNumOfNodes()-1; index++){
+    //     Node *currentNode = currentTree->getNodeWithIndex(index);
+    //     std::vector<double> gammaParams = currentTree->getGammaParams(currentNode);
+    //     returnString += "\t" + std::to_string(gammaParams[0]) + "\t" + std::to_string(gammaParams[1]);
+    // }
     return returnString + "\n";
 }
 
@@ -269,3 +295,4 @@ std::string Model::treeHeader(){
 std::string Model::treeOut(int i){
     return std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" + tree->writeNewick() + "\n";
 }
+

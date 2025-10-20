@@ -17,7 +17,8 @@ struct Settings {
     int             burnInIterations;
     int             tuneFrequency;
     double          treeLengthLambda;
-    double          treeWeight;
+    double          branchWeight;
+    double          topologyWeight;
     double          stationaryWeight;
     double          rateWeight;
 

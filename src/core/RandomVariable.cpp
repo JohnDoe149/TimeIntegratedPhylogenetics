@@ -5,13 +5,19 @@
 #include <ctime>
 #include "Msg.hpp"
 #include "RandomVariable.hpp"
+#include "test.h"
 
 
 
 RandomVariable::RandomVariable(void) {
-
+    #ifdef RANDOM
     uint32_t seed = (uint32_t) time(NULL);
+    #endif 
+    #ifndef RANDOM
+    uint32_t seed = 1;
+    #endif
     initialize(seed);
+
 }
 
 RandomVariable::RandomVariable(uint32_t seed) {

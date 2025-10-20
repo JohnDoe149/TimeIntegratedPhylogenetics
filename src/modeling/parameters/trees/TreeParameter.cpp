@@ -5,36 +5,44 @@
 #include "core/Alignment.hpp"
 #include "Node.hpp"
 #include <cmath>
+#include <test.h>
 
 TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
-                                                         branchDelta(0.5), moveChoice(-1), branchCount(0), branchAcceptCount(0), 
-                                                         treeCount(0), treeAcceptCount(0), treeAlpha(10000) {
-    fixedTree = newick != "";
-    if(!fixedTree)
-        trees[0] = new TreeObject(aln);
-    else
-        trees[0] = new TreeObject(newick, aln->getTaxaNames());
+                                                         moveChoice(-1), rateCount(0), rateAcceptCount(0), rateDelta(0.5), shapeCount(0),
+                                                         shapeAcceptCount(0), shapeDelta(0.5), shapePriorRate(1.0), ratePriorRate(1.0), shapePriorShape(1.0), ratePriorShape(1.0){
 
-    if(!fixedTree){
-        RandomVariable& rng = RandomVariable::randomVariableInstance();
-        std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
-        for(Node* n : nodes) {
-            if(n != trees[0]->getRoot()) {
-                trees[0]->setBranchLength(n, Probability::Exponential::rv(&rng, lambda));
-            }
+    // first make a new tree based on aln
+    trees[0] = new TreeObject(aln);
+    RandomVariable& rng = RandomVariable::randomVariableInstance(
+
+    );
+
+    // Now go through each node and assign their ancestor branch random gamma parameters shape and rate.
+    // except the root as it has no ancestor branch
+    std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
+    for(Node* n : nodes) {
+        if(n != trees[0]->getRoot()) {
+
+            // shape and rate both have gamma priors
+            double shape = Probability::Gamma::rv(&rng, shapePriorShape, shapePriorRate); 
+            double rate = Probability::Gamma::rv(&rng, ratePriorShape, ratePriorRate); 
+            trees[0]->setGammaDist(n, shape, rate);
         }
     }
 
+    // copy the tree to the tree vector in case we reject
     trees[1] = new TreeObject(*trees[0]);
 
-    std::vector<double> values = trees[0]->getBranchLengths();
-    double totalLength = 0.0;
-    for(double val : values){
-        totalLength += val;
+    // go through each node and calculate the probability of the gamma parameters and add them up 
+    // to use in the posterior calculation
+    double lnShape = 0.0;
+    double lnRate = 0.0;
+    std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
+    for(std::vector<double> gammaParam: allGammaParams){
+        lnShape += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(shapePriorShape, ratePriorRate, gammaParam[1]);
     }
-    currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
-    oldPrior = currentPrior;
-
+    currentPrior = lnShape + lnRate;
     dirty();
 }
 
@@ -43,272 +51,170 @@ TreeParameter::~TreeParameter(){
     delete trees[1]; 
 }
 
+// This method is in the event the proposed tree gets accepted, copy the accepted tree (tree[0]) to trees[1]
+// for storage. Set currentPrior to oldPrior to store it. Also record what type of treeMove was made for the burn-in
 void TreeParameter::accept(){
     *trees[1] = *trees[0];
     oldPrior = currentPrior;
 
     if(moveChoice == 0){
-        branchAcceptCount += 1;
-    }
+        rateAcceptCount += 1;
+    } 
     else if(moveChoice == 1){
-        treeAcceptCount += 1;
+        shapeAcceptCount += 1;
     }
 
+    // reset moveChoice
     moveChoice = -1;
 }
 
+// In the event the proposed tree is rejected, copy the tree we stored in trees[1] to use for the next proposal
 void TreeParameter::reject(){
     *trees[0] = *trees[1];
     currentPrior = oldPrior;
-
     moveChoice = -1;
 }
 
-
-double TreeParameter::update() {
+// This update randomly selects a node and then randomly selects either the shape or rate parameter of its
+// ancestor branch to update.
+double TreeParameter::updateTreeGamma(){
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    double randomMove = rng.uniformRv();
 
-    double hastings = 0.0;
+    // pick a random node that is not the root to update one of their ancestor branch's gamma parameters
+    TreeObject* tree = trees[0];
+    std::vector<Node*> nodes = tree->getPostOrderSeq();
+    Node* randNode = nullptr;
+    Node* treeRoot = tree->getRoot();
+    do{
+        randNode = nodes[(int)(rng.uniformRv() * nodes.size())];
+    } while(randNode == treeRoot);
     
-    if(randomMove < 0.75){
-        if(!fixedTree){
-            moveChoice = 0;
-            branchCount += 1;
-            TreeObject* tree = trees[0];
-            std::vector<Node*> nodes = tree->getPostOrderSeq();
-            Node* root = tree->getRoot();
+    // flip a coin to determine which parameter to update (shape if 1 or rate if 0)
+    int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
+    double hastings;
 
-            Node* u = nullptr;
-            do{
-                u = nodes[(int)(rng.uniformRv() * nodes.size())];
-            }
-            while(u == root || u->getIsTip() == true);
-            Node* v = u->getAncestor();
-
-            std::set<Node*> neighbors1 = u->getNeighbors();
-            neighbors1.erase(v);//Exclude v
-            Node* a = Node::chooseNodeFromSet(neighbors1);
-
-            std::set<Node*> neighbors2 = v->getNeighbors();
-            neighbors2.erase(u);//Don't select u
-            Node* c = Node::chooseNodeFromSet(neighbors2);
-
-            double scale = std::exp(branchDelta * (rng.uniformRv() - 0.5));
-
-            double paths[3];
-            paths[0] = tree->getBranchLength(u) * scale;
-            paths[1] = tree->getBranchLength(a) * scale;
-            Node* b3 = nullptr;
-            if(c != v->getAncestor())
-                b3 = c;
-            else
-                b3 = v;
-            paths[2] = tree->getBranchLength(b3) * scale;
-
-            double totalPath = paths[0] + paths[1] + paths[2];
-
-            std::vector<Node*> nodeSet = {a, b3};
-            int pick = (int)(rng.uniformRv() * 2);
-            double randomLoc = rng.uniformRv() * totalPath;
-
-            //The pick decides the oritentation of the path
-            if(randomLoc <= totalPath - paths[pick]){
-                tree->setBranchLength(nodeSet[pick], randomLoc);
-                tree->setBranchLength(u, totalPath - paths[pick] - randomLoc);
-                tree->setBranchLength(nodeSet[pick ^ 1], paths[pick]);
-            }
-            else{
-                u->removeNeighbor(a);
-                a->removeNeighbor(u);
-                v->removeNeighbor(c);
-                c->removeNeighbor(v);
-
-                v->addNeighbor(a);
-                a->addNeighbor(v);
-                u->addNeighbor(c);
-                c->addNeighbor(u);
-                tree->setBranchLength(nodeSet[pick ^ 1], totalPath - randomLoc);
-                tree->setBranchLength(u, randomLoc - (totalPath - paths[pick]));
-                tree->setBranchLength(nodeSet[pick], totalPath - paths[pick]);
-
-                //Rooting logic
-                if(v->getAncestor() == c){
-                    u->setAncestor(c);
-                    v->setAncestor(u);
-                    a->setAncestor(v);
-                }
-                else{
-                    c->setAncestor(u);
-                    u->setAncestor(v);
-                    a->setAncestor(v);
-                }
-            }
-
-
-            u->setNeedsTPUpdate(true);
-            v->setNeedsTPUpdate(true);
-            a->setNeedsTPUpdate(true);
-            c->setNeedsTPUpdate(true);
-
-            //The updating gets a little awkward because we don't really know the branching here.
-            Node* q = v;
-            if(v->getAncestor() != u)
-                q = u;
-
-            do{
-                if(q->getIsTip() == false)
-                    q->setNeedsCLUpdate(true);
-                q = q->getAncestor();
-            }
-            while(q != root);
-            root->setNeedsCLUpdate(true);
-
-            tree->initPostOrder();
-            this->dirty();
-
-            hastings = 3 * std::log(scale);
-        }
-        else {
-            moveChoice = 0;
-            branchCount += 1;
-            std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
-            Node* root = trees[0]->getRoot();
-
-            Node* p = nullptr;
-            do{
-                p = nodes[(int)(rng.uniformRv() * nodes.size())];
-            }
-            while(p == root);
-
-            if(p->getIsTip() == true){
-                double currentV = trees[0]->getBranchLength(p);
-                double scale = std::exp(branchDelta * (rng.uniformRv() - 0.5));
-                double newV = currentV * scale;
-                trees[0]->setBranchLength(p, newV);
-                p->setNeedsTPUpdate(true);
-
-                Node* q = p;
-                do{
-                    if(q->getIsTip() == false)
-                        q->setNeedsCLUpdate(true);
-                    
-                    q = q->getAncestor();
-                } 
-                while(q != root);
-                root->setNeedsCLUpdate(true);
-
-                this->dirty();
-
-                hastings = std::log(scale);
-            }
-            else {
-                double currentV = trees[0]->getBranchLength(p);
-                double scale = std::exp(branchDelta * (rng.uniformRv() - 0.5));
-                double newV = currentV * scale;
-                trees[0]->setBranchLength(p, newV);
-                p->setNeedsTPUpdate(true);
-
-                for(Node* n : p->getNeighbors()){
-                    if(n != p->getAncestor()){
-                        double currentNLength = trees[0]->getBranchLength(n);
-                        double newLength = currentNLength * scale;
-                        trees[0]->setBranchLength(n, newLength);
-                        n->setNeedsTPUpdate(true);
-                        if(n->getIsTip() == false)
-                            n->setNeedsCLUpdate(true);
-                    }
-                }
-
-                Node* q = p;
-                do{
-                    if(q->getIsTip() == false)
-                        q->setNeedsCLUpdate(true);
-                    
-                    q = q->getAncestor();
-                } 
-                while(q != root);
-                root->setNeedsCLUpdate(true);
-
-                this->dirty();
-
-                hastings = 3 * std::log(scale);
-            }
-        }
-    }
-    else {
+    // record whether or not a shape or rate update is going to be made
+    if(coinFlip){
+        shapeCount += 1;
         moveChoice = 1;
-        treeCount += 1;
-        std::map<Node*, double> branchMapping = trees[0]->getBranchLengthMapping();
-        trees[0]->updateAll();
-        this->dirty();
-
-        std::vector<double> values;
-        std::vector<Node*> nodeIndices;
-        double totalLength = 0.0;
-        for(auto mapping : branchMapping){
-            double l = mapping.second;
-            nodeIndices.push_back(mapping.first);
-            values.push_back(l);
-            totalLength += l;
-        }
-
-        std::vector<double> alphaForward(values.size(), 0.0);
-        std::vector<double> alphaReverse(values.size(), 0.0);
-        std::vector<double> z(values.size(), 0.0);
-
-        for(int i = 0; i < values.size(); i++) {
-            values[i] /= totalLength;
-            alphaForward[i] = values[i] * treeAlpha;
-        }
-        
-        Probability::Dirichlet::rv(&rng, alphaForward, z);
-
-        for(int i = 0; i < z.size(); i++) {
-            alphaReverse[i] = z[i] * treeAlpha;
-        }
-        
-        hastings  = Probability::Dirichlet::lnPdf(alphaReverse, values) - Probability::Dirichlet::lnPdf(alphaForward, z);
-
-        for(int i = 0; i < values.size(); i++){
-            trees[0]->setBranchLength(nodeIndices[i], z[i] * totalLength);
-        }
+        std::vector<double> gammaParams = tree->getGammaParams(randNode);
+        double scale = std::exp(shapeDelta * (rng.uniformRv() - 0.5));
+        tree->setGammaDist(randNode, gammaParams[0] * scale, gammaParams[1]);
+        hastings = std::log(scale);
+    } else{
+        rateCount += 1;
+        moveChoice = 0;
+        std::vector<double> gammaParams = tree->getGammaParams(randNode);
+        double scale = std::exp(rateDelta * (rng.uniformRv() - 0.5));
+        tree->setGammaDist(randNode, gammaParams[0], gammaParams[1] * scale);
+        hastings = std::log(scale);
     }
 
-    std::vector<double> values = trees[0]->getBranchLengths();
-    double totalLength = 0.0;
-    for(double val : values){
-        totalLength += val;
-    }
-    currentPrior = Probability::Gamma::lnPdf(values.size(), lambda, totalLength);
+    randNode->setNeedsTPUpdate(true);
+    tree->initPostOrder();
+    this->dirty();
 
+    // go through each node and calculate the probability of the gamma parameters and add them up
+    // to get our prior probability for the posterior calculation
+    double lnShape = 0.0;
+    double lnRate = 0.0;
+    std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
+    for(std::vector<double> gammaParam: allGammaParams){
+        lnShape += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(ratePriorShape, ratePriorRate, gammaParam[1]);
+    }
+    currentPrior = lnShape + lnRate;
     return hastings;
 }
 
-void TreeParameter::tune() {
-    double rate1 = (double)branchAcceptCount/(double)branchCount;
+// This tree update changes the topology of the tree via NNI (nearest neighbor interchange)
+// NNI implementation:
+// pick a node p with the node a as its ancestor. Get p's "cousin" from node a and then swap the subtree with one of p's children
+// Does not change anything related to branch lengths, only how the nodes are arranged
+double TreeParameter::updateTreeMove() {
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
 
-    if ( rate1 > 0.33 ) {
-        branchDelta *= (1.0 + ((rate1-0.33)/0.67));
-    }
-    else {
-        branchDelta /= (2.0 - rate1/0.33);
-    }
-    branchAcceptCount = 0;
-    branchCount = 0;
+    double hastings;
+    TreeObject* tree = trees[0];
+    std::vector<Node*> nodes = tree->getPostOrderSeq();
+    Node* root = tree->getRoot();
 
-    double rate2 = (double)treeAcceptCount/(double)treeCount;
+    // pick a random internal branch by picking a node's whose ancestor branch
+    // is an internal branch. The additional stipulation is that the ancestor of the internalNode
+    // (internalNodeAncestor) cannot be the root
+    Node* internalNode = nullptr;
+    Node* internalNodeAncestor = nullptr; 
+    do{
+        internalNode = nodes[(int)(rng.uniformRv() * nodes.size())];
+        
+        // if a node isn't the root, it will always have an ancestor
+        if(internalNode != root){
+            internalNodeAncestor = internalNode->getAncestor();
+        }
+    }
+    while(internalNodeAncestor == nullptr || 
+          internalNode == root || 
+          internalNode->getIsTip()
+    );
 
-    if ( rate2 > 0.33 ) {
-        treeAlpha /= (1.0 + ((rate2-0.33)/0.67));
-    }
-    else {
-        treeAlpha *= (2.0 - rate2/0.33);
-    }
-    treeAcceptCount = 0;
-    treeCount = 0;
+    // now we need to pick which of p's subtrees to swap
+    std::set<Node*> iNNeighborSet = internalNode->getNeighbors();
+    iNNeighborSet.erase(internalNodeAncestor);
+    Node* swap1 = Node::chooseNodeFromSet(iNNeighborSet);
+
+    // the other subtree to swap with is always p's cousin
+    std::set<Node*> iNANeighborSet = internalNodeAncestor->getNeighbors();
+    iNANeighborSet.erase(internalNode);
+    iNANeighborSet.erase(internalNodeAncestor->getAncestor()); // this might not be safe
+    Node* swap2 = Node::chooseNodeFromSet(iNANeighborSet); 
+
+    // make swap1 a child of internalNodeAncestor by adding the relationship and removing its relationship with internalNode
+    swap1->setAncestor(internalNodeAncestor);
+    internalNodeAncestor->addNeighbor(swap1);
+    swap1->addNeighbor(internalNodeAncestor);
+    swap1->removeNeighbor(internalNode);
+    internalNode->removeNeighbor(swap1);
+
+    // make swap2 be a child of p
+    swap2->setAncestor(internalNode);
+    swap2->addNeighbor(internalNode);
+    internalNode->addNeighbor(swap2);
+    internalNodeAncestor->removeNeighbor(swap2);
+    swap2->removeNeighbor(internalNodeAncestor);
+
+    tree->initPostOrder();
+    this->dirty();
+    hastings = 0.0; // balanced move, so hastings == 0
+    return hastings;
 }
 
-double TreeParameter::lnPrior() {
-    return currentPrior;
+// During the burn-in phase of MCMC we seek to tune how the rate and shape parameter proposals are made for all
+// nodes. The classic heurestic of aiming for an acceptance rate of ~0.33 is used. The topology itself can not be
+// tuned, just the branch lengths (rate and shape).
+void TreeParameter::tune() {
+
+    // Calculate the rate proposals acceptance rate, if its too high, make rateDelta larger to decrease acceptance
+    // otherwise make it smaller (more conservative proposals) to increase acceptance.
+    double rateRate = (double)rateAcceptCount/(double)rateCount;
+    if ( rateRate > 0.33 ) {
+        rateDelta *= (1.0 + ((rateRate-0.33)/0.67));
+    }
+    else {
+        rateDelta /= (2.0 - rateRate/0.33);
+    }
+    rateAcceptCount = 0;
+    rateCount = 0;
+    
+    // Update shapeDelta the same way rateDelta is updated
+    double shapeRate = (double)shapeAcceptCount/(double)shapeCount;
+    if ( shapeRate > 0.33 ) {
+        shapeDelta *= (1.0 + ((shapeRate-0.33)/0.67));
+    }
+    else {
+        shapeDelta /= (2.0 - shapeRate/0.33);
+    }
+    shapeAcceptCount = 0;
+    shapeCount = 0;
+
+    std::cout << "rateRate: " << rateRate << " shapeRate: " << shapeRate << "\n";
 }

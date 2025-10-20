@@ -22,9 +22,14 @@ class TreeObject {
         TreeObject&         operator=(const TreeObject& rhs);
         void                flipAllTPs();
         void                flipAllCLs();
-        double              getBranchLength(Node* n) const;
-        std::map<Node*, double> getBranchLengthMapping();
-        std::vector<double> getBranchLengths();
+
+        // new Gamma methods
+        std::vector<double> getGammaParams(Node* n) const;
+        std::map<Node*, std::vector<double>> getGammaMap();
+        std::vector<std::vector<double>> getGammas();
+        void                setGammaDist(Node* n, double alpha, double beta);
+        Node*               getNodeWithIndex(int index);
+        int                 getNumOfNodes(){return nodes.size();}
         std::string         getNewick() const;
         int                 getNumTaxa(){return numTaxa;}
         int                 getNumNodes(){return nodes.size();}
@@ -35,18 +40,22 @@ class TreeObject {
         void                passDown(Node* p, std::vector<Node*>& vec);
         void                print(void) const;
         void                print(std::string header) const;
-        void                setBranchLength(Node* n, double length);
         void                updateAll();
         void                accept();
         void                reject();
-        
+        void                setNodeNameIndex();
+        void                setBranchLength(std::vector<double> newbranchLengths){branchLengths = newbranchLengths;}
     private:
+        std::vector<double> branchLengths;
         Node*               addNode(void);
-        std::map<Node*, double> branchLengths;
+
+        // the double vector will have 2 (hahaha) double values, first represents alpha (shape), second represents beta (rate)
+        std::map<Node*, std::vector<double>> branchGamma;
+
         void                clone(const TreeObject& t);
         void                deleteAllNodes();
         int                 getTaxonIndex(std::string token, std::vector<std::string> taxaNames);
-        std::vector<Node*>  nodes;
+        std::vector<Node*>  nodes;  
         int                 numTaxa;
         std::vector<std::string> parseNewickString(std::string newick);
         std::vector<Node*>  postOrderSeq;

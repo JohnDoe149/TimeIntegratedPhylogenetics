@@ -1,28 +1,18 @@
 #include <complex>
 #include "TransitionProbability.hpp"
+#include "core/RateEigens.hpp"
 #include "core/Math.hpp"
 #include <cstring>
+#include "test.h"
 
 TransitionProbability::TransitionProbability(const int nn)
     : numStates(4), numNodes(nn), probs1(), probs2() {
 
-	/*
-	probs[0] = new Matrix<double>*[2*numNodes*numCats];
-    probs[1] = probs[0] + numNodes;
-
-    for(int i = 0; i < numNodes*numCats; i++){
-        probs[0][i] = new Matrix<double>(numStates, numStates, 0.0);
-        probs[1][i] = new Matrix<double>(numStates, numStates, 0.0);
-    }
-	*/
-
 	Matrix<double> Q(numStates, numStates, 0.0);
-
 	eigens = new EigenSystem(numStates);
 	
 	allocateQ(1);
-	updateQ(Q, 0);
-	accept();
+	updateQ(Q);
 }
 
 /* Destructor. Deallocates memory used for Q matrix
@@ -31,126 +21,123 @@ TransitionProbability::~TransitionProbability(void) {
 	delete eigens;
 	
 	for(auto i : probs1){
-		delete [] i;
+		delete [] i; 
 	}
 	for(auto i : probs2){
 		delete [] i;
 	}
 }
 
+/* This method calculates the transition probability for the branch that flows into param node. Stores the calculated transition
+   probability matrix in a buffer based on param state, rate and node. Rate is an artifact of a legacy model. State indicates which
+   buffer to use in the ping-pong buffer and each node has its own ancestor branch and therefore has a transition probabiliy associated
+   with the node. Param alpha and beta are parameters of the gamma distribution that governs the branch length of the ancestor branch.
+*/
+void TransitionProbability::setProbs(const int state, const int rate, const int node, double alpha, double beta) {
 
-void TransitionProbability::accept(void) {
-	isOldComplex = isComplex;
-	for(int i = 0; i < isComplex.size(); i++){
-		if(!isComplex[i]){
-			memcpy(rateEigen[i].oldC_ijk, rateEigen[i].c_ijk, numStates*numStates*numStates*sizeof(double));
-			memcpy(rateEigen[i].oldEigenvalue, rateEigen[i].eigenvalue, numStates*sizeof(double));
-		}
-		else {
-			memcpy(complexRateEigen[i].oldCC_ijk, complexRateEigen[i].cc_ijk, numStates*numStates*numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].oldCeigenvalue, complexRateEigen[i].ceigenvalue, numStates*sizeof(std::complex<double>));
-		}
+	// fetch the matrix based off params, state, rate and node. This matrix will store transition probability
+	Matrix<double> P0 = (*this)(state, rate, node);  
+ 
+	// call the method to transform P0
+	tiProbsGamma(alpha, beta, P0);
+}
+
+// Uses formula outlined in Huelsenbeck's "Bayesian Perspective on a Non-parsimonious Parsimony Model" to
+// calculate transition probability matrix ((IdentityMatrix - (1/rate|beta) * rateMatrix)^-(shape|alpha))
+// using the rate matrix, Q, which is stored as a class static variable.
+void TransitionProbability::tiProbsGamma(const double shape, const double rate, Matrix<double>& P0) {
+
+	// first copy the rate matrix so we can transform it
+	Matrix<double> transformMatrix(Q.copy());
+
+	// next perform a scalar multiplication by 1/rate and then subtract the transformed matrix from the identity matrix (I-A)
+	transformMatrix *= -1/rate;
+	for(int i = 0; i < transformMatrix.dim1(); i++){
+		transformMatrix(i,i) = 1 + transformMatrix(i,i);
 	}
-}
 
-void TransitionProbability::reject(void) {	
-	isComplex = isOldComplex;
-	for(int i = 0; i < isOldComplex.size(); i++){
-		if(!isComplex[i]){
-			memcpy(rateEigen[i].c_ijk, rateEigen[i].oldC_ijk, numStates*numStates*numStates*sizeof(double));
-			memcpy(rateEigen[i].eigenvalue, rateEigen[i].oldEigenvalue, numStates*sizeof(double));
-		}
-		else {
-			memcpy(complexRateEigen[i].cc_ijk, complexRateEigen[i].oldCC_ijk, numStates*numStates*numStates*sizeof(std::complex<double>));
-			memcpy(complexRateEigen[i].ceigenvalue, complexRateEigen[i].oldCeigenvalue, numStates*sizeof(std::complex<double>));
-		}
-	}
-}
-
-void TransitionProbability::setProbs(const int state, const int rate, const int node, const double v) {
-	Matrix<double> P0 = (*this)(state, rate, node);
-	if (!isComplex[rate])
-		tiProbsEigens(v, P0, rateEigen[rate]);
-	else
-		tiProbsComplexEigens(v, P0, complexRateEigen[rate]);
-}
-
-/* This function calculates transition probabilities using
-   complex eigenvalues and eigenvectors. */
-void TransitionProbability::tiProbsComplexEigens(const double v, Matrix<double>& P, ComplexRateEigen& rE) {
-
-	std::vector<std::complex<double>> ceigValExp;
-
-	for (int s=0; s<numStates; s++)
-		ceigValExp.push_back(exp(rE.ceigenvalue[s] * v));
-
-	const std::complex<double>* ptr = rE.cc_ijk;
-	for (int i=0; i<numStates; i++)
-		{
-		for (int j=0; j<numStates; j++) 
-			{
-			std::complex<double> sum = std::complex<double>(0.0, 0.0);
-			for(int s=0; s<numStates; s++)
-				sum += (*ptr++) * ceigValExp[s];
-			P(i, j) = (sum.real() < 0.0) ? 0.0 : sum.real();
-			}
-		}
-}
-
-/* This function calculates transition probabilities using
-   eigenvalues and eigenvectors. */
-void TransitionProbability::tiProbsEigens(const double v, Matrix<double> &P, RateEigen& rE) {
+	// get the eigenvalues and eigenvectors via eigens->update. x
+	isComplex = eigens->update(transformMatrix, rateEigen[0], complexRateEigen[0]);
 	
-	std::vector<double> eigValExp;
+	// now split here depending on whether or not we have complex eigenvalues
+	if(!isComplex){
+		RateEigen newDiag = rateEigen[0];
+		Matrix<double> *leftMatrix = newDiag.diagLeftMatrix;
+		Matrix<double> *rightMatrix = newDiag.diagRightMatrix;
+		double* eigenvalues = newDiag.eigenvalue;
 
-	for (int s=0; s<numStates; s++)
-		eigValExp.push_back(exp(rE.eigenvalue[s] * v));
+		// take the eigenvalues to the power of -(shape|alpha) to mimic A^-x = P * D^-x * P^-1 as part of taking the matrix to the
+		// -(shape|alpha) power to get our diagonal matrix
+		Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
+		for(int i = 0; i < Q.dim1(); i++){
+			diagonalMatrix(i, i) = eigenvalues[i];
+		}
 
-	double *ptr = rE.c_ijk;
-	for (int i=0; i<numStates; i++) 
-		{
-		for (int j=0; j<numStates; j++) 
-			{
-			double sum = 0.0;
-			for(int s=0; s<numStates; s++)
-				sum += (*ptr++) * eigValExp[s];
-			P(i, j) = (sum < 0.0) ? 0.0 : sum;
+		// take the diagonal matrix to the -shape power. Here we use the property a^b = e^(b * log(a)) 
+		for(int i = 0; i < Q.dim1(); i++){
+			diagonalMatrix(i, i) = std::pow(eigenvalues[i], -1 * shape);
+		}
+
+		// now get transitionProbability matrix by using the property A = P*D*P^-1
+		Matrix<double> newMatrix = ((*leftMatrix) * diagonalMatrix);
+		Matrix<double> finalMatrix = newMatrix * (*rightMatrix);
+		
+		// copy over the matrix to designated buffer for transition probability matrix
+		for(int i = 0; i < Q.dim1(); i++){
+			for(int j = 0; j < Q.dim2(); j++){
+				P0(i,j) = finalMatrix(i, j); 
 			}
 		}
+	} else {
+		ComplexRateEigen newDiag = complexRateEigen[0];
+		Matrix<std::complex<double>> *rightMatrix = newDiag.cDiagRightMatrix;
+		Matrix<std::complex<double>> *leftMatrix = newDiag.cDiagLeftMatrix;
+		std::complex<double> *cEigenvalues = newDiag.ceigenvalue;
+		
+		// now take the complex numbers to the power of -1/shape
+		Matrix<std::complex<double>> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
+		for(int i = 0; i < Q.dim1(); i++){
+			diagonalMatrix(i, i) = std::pow(cEigenvalues[i], -1 * shape);
+		}
+		
+		// now that the transition probability matrix has been calculated, because a matrix of real numbers ^ real positive numbers
+		// is still a matrix of real numbers, so we can safely discard the imaginary components of the transition probability
+		Matrix<std::complex<double>> newMatrix = (( (*leftMatrix) * diagonalMatrix)*(*rightMatrix));  
+		for(int i = 0; i < Q.dim1(); i++){
+			for(int j = 0; j < Q.dim2(); j++){
+				P0(i,j) = newMatrix(i, j).real(); 
+			}
+		}
+	} 
+}
+
+// a simple method to update the rateMatrix Q
+void TransitionProbability::updateQ(Matrix<double> otherQ){
+	Q = otherQ;
 }
 
 void TransitionProbability::allocateQ(int size){
-	if(size > isComplex.size()) {
-		for(int i = 0, num = size - isComplex.size(); i < num; i++){
-			isComplex.push_back(false);
-			rateEigen.push_back(RateEigen(numStates));
-			complexRateEigen.push_back(ComplexRateEigen(numStates));
 
-			probs1.push_back(new Matrix<double>[numNodes]);
-			probs2.push_back(new Matrix<double>[numNodes]);
-			for(int j = 0; j < numNodes; j++){
-				probs1.back()[j] = Matrix<double>(numStates, numStates, 0.0);
-       	 		probs2.back()[j] = Matrix<double>(numStates, numStates, 0.0);
-			}
-		}
+	rateEigen.push_back(RateEigen(numStates));
+	complexRateEigen.push_back(ComplexRateEigen(numStates)); //initialize a ComplexRateEigen struct
+
+	probs1.push_back(new Matrix<double>[numNodes]);
+	probs2.push_back(new Matrix<double>[numNodes]);
+
+	// for each node, initialize two matrices, one in probs1 and probs 2
+	for(int j = 0; j < numNodes; j++){
+		probs1.back()[j] = Matrix<double>(numStates, numStates, 0.0);
+		probs2.back()[j] = Matrix<double>(numStates, numStates, 0.0);
 	}
 
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();
 	probs2.shrink_to_fit();
-
-}
-
-void TransitionProbability::updateQ(Matrix<double> Q, const int index) {
-	isComplex[index] = eigens->update(Q, rateEigen[index], complexRateEigen[index]);
 }
 
 // Be sure you want to delete!!
 void TransitionProbability::deleteQ(const int index) {
-	isComplex.erase(isComplex.begin() + index);
-	rateEigen.erase(rateEigen.begin() + index);
 	complexRateEigen.erase(complexRateEigen.begin() + index);
 
 	auto prob_it1 = probs1.begin() + index;
@@ -161,7 +148,6 @@ void TransitionProbability::deleteQ(const int index) {
 	delete [] *prob_it2;
 	probs2.erase(prob_it2);
 
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();
@@ -170,7 +156,6 @@ void TransitionProbability::deleteQ(const int index) {
 
 void TransitionProbability::deleteNQ(const int count) {
 	for(int i = 0; i < count; i++){
-		isComplex.pop_back();
 		rateEigen.pop_back();
 		complexRateEigen.pop_back();
 
@@ -183,7 +168,6 @@ void TransitionProbability::deleteNQ(const int count) {
 		probs2.pop_back();
 	}
 	
-	isComplex.shrink_to_fit();
 	rateEigen.shrink_to_fit();
 	complexRateEigen.shrink_to_fit();
 	probs1.shrink_to_fit();

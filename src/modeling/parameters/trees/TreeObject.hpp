@@ -24,7 +24,7 @@ class TreeObject {
         void                flipAllCLs();
 
         // new Gamma methods
-        std::vector<double>              getGammaParams(Node* n) const;
+        std::vector<double> getGammaParams(Node* n) const;
         std::map<Node*, std::vector<double>> getGammaMap();
         std::vector<std::vector<double>> getGammas();
         void                setGammaDist(Node* n, double alpha, double beta);
@@ -44,7 +44,9 @@ class TreeObject {
         void                accept();
         void                reject();
         void                setNodeNameIndex();
+        void                setBranchLength(std::vector<double> newbranchLengths){branchLengths = newbranchLengths;}
     private:
+        std::vector<double> branchLengths;
         Node*               addNode(void);
 
         // the double vector will have 2 (hahaha) double values, first represents alpha (shape), second represents beta (rate)

@@ -5,7 +5,7 @@
 // verify that the preorder traversal works
 // given that right and left arent fixed, as long as pre order and post order are roughly in reverse order preorder is right
 TEST(RandomTree, preorderTraversal){
-    RandomTree randomTree(4, 10);
+    RandomTree randomTree(4, 10, 8);
     std::vector<Node*> preorder = randomTree.getPreorderTrav();
     std::vector<Node*> postorder = randomTree.getTree()->getPostOrderSeq();
     // for(int i = 0; i < preorder.size(); i++){
@@ -18,7 +18,7 @@ TEST(RandomTree, preorderTraversal){
 
 // verify that currentSequences look good when genNewData is called
 TEST(RandomTree, genNewData){
-    RandomTree randomTree(4, 10);
+    RandomTree randomTree(4, 10, 8);
     randomTree.genNewData();
     std::vector<std::vector<int>> allSeq = randomTree.getAllNodeSequences();
     for(int i = 0; i < allSeq.size(); i++){

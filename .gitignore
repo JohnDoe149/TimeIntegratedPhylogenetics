@@ -1,4 +1,6 @@
 /build/
 /.vscode
+/testing/test_data
 
-/validation
+validation/*
+!validation/*.py

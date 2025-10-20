@@ -15,9 +15,7 @@ class TransitionProbability {
         const Matrix<double>&   operator()(int s, int r, int n) const {
                                     return (s == 0) ? probs1[r][n] : probs2[r][n];
                                 }
-        int                     getNumStates(void) { return numStates; }
-        void                    accept(void);          
-        void                    reject(void);                  
+        int                     getNumStates(void) { return numStates; }          
         void                    setProbs(const int state, const int r, const int node, double alpha, double beta);
         std::vector<Matrix<double>>     generateProbs(Matrix<double> Q, std::vector<double> branches);
         void                    updateQ(Matrix<double> Q);

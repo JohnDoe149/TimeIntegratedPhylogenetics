@@ -2,6 +2,7 @@
 #include "modeling/parameters/trees/TreeObject.hpp"
 #include "core/EigenSystem.hpp"
 #include "core/RateEigens.hpp"
+#include <filesystem>
 
 
 class ConditionalLikelihood;
@@ -13,7 +14,7 @@ class TransitionProbability;
 */
 class RandomTree {
     public:
-        RandomTree(int numTaxa, int characterSequenceCount);
+        RandomTree(int numTaxa, int characterSequenceCount, double lambda, std::filesystem::path outputPath);
         ~RandomTree();
         void genNewData();
         void changeBranchLengths(double newRateParam);
@@ -21,6 +22,10 @@ class RandomTree {
         TreeObject* getTree() {return tree;}
         std::vector<std::vector<int>> getAllNodeSequences(){return allNodeSequences;}
         int printSequences(std::string fileName);
+        int printTips(std::string fileName);
+        void rescaleTree(double newTreeDiameter);
+        std::string getOutputPath() {return outputPath;}
+        void setOutputPath(std::string newOutputPath) {outputPath = newOutputPath;}
     private:
         void preorderDescend(std::vector<Node*>& PreOrderTrav, Node* currentNode);
         RateMatrix* rateMatrix;
@@ -35,4 +40,5 @@ class RandomTree {
         RateEigen *rateEigen = new RateEigen(4);
         ComplexRateEigen *complexRateEigen = new ComplexRateEigen(4);
         std::vector<std::vector<int>> allNodeSequences;
+        std::string outputPath;
 };

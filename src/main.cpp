@@ -12,11 +12,13 @@
 #include "modeling/parameters/trees/Node.hpp"
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
+#include <iomanip>
 
 #include "test.h"
 #include "modeling/model/RandomTree.hpp"
 
-#ifndef TEST
+#ifdef BASE
 int main(int argc, char* argv[]) {
 
     Settings settings(argc, argv);
@@ -24,7 +26,7 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    Alignment aln(settings.nexusInput);
+    Alignment aln(settings.nexusInput, 1);
     std::cout << "Initializing model..." << std::endl;
 
     TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
@@ -49,9 +51,68 @@ int main(int argc, char* argv[]) {
 #ifdef TEST
 int main(int argc, char* argv[]) {
 
-    RandomTree randomTree(6, 100);
+    RandomTree randomTree(50, 800, 7.7);
+    randomTree.rescaleTree(4.00);
     randomTree.genNewData();
     std::vector<std::vector<int>> allSeq = randomTree.getAllNodeSequences();
-    randomTree.printSequences("test1");
+    TreeObject* randomtree = randomTree.getTree();
+    std::cout << randomtree->getNewick() << "\n";
+    randomTree.printSequences("testSequence1");
+    randomTree.printTips("test1");
+
+    Settings settings(argc, argv);
+    RateMatrix rateMatrix(settings);
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
+    Alignment aln(randomTree.getTipFilePath(), 1);
+    std::cout << "Initializing model..." << std::endl;
+
+    TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
+
+    Model model(settings, &aln, &treeParam, &rateMatrix);
+    Mcmc myMCMC(&model, &treeParam, &rateMatrix, settings);
+
+    std::cout << "Starting MCMC..." << std::endl;
+
+    myMCMC.burnin();
+    myMCMC.run();
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << treeParam.writeNewick() << "\n" << std::flush;
+    std::cout << randomtree->getNewick() << "\n";
+    std::cout << "Analysis was completed in " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << "[m]" << std::endl;
+}
+#endif
+
+#ifdef GENDATA
+int main(int argc, char* argv[]) {
+    std::vector<double> diameters = {0.25, 0.5, 1.0, 2.0, 3.0, 4.0};
+    for (double treeDiameter: diameters){
+        int taxa = 50;
+        int siteCount = 800;
+        double branchLengthLambda = 10.0;
+        std::filesystem::path projectRoot = std::filesystem::current_path();
+        projectRoot = projectRoot.parent_path();
+        std::filesystem::path outputPath = projectRoot / "validation" / "TIP_testing_data" / ("taxa" + std::to_string(taxa) + "diam" + std::to_string(treeDiameter) + "siteCount" + std::to_string(siteCount));
+
+        // make a file path for tree file
+        for(int dataCount = 0; dataCount < 5; dataCount++){
+            std::ofstream treeOutFile((outputPath / (std::to_string(dataCount) + "newick.tree")));
+
+            // we must set the file path
+            RandomTree randomTree(taxa, siteCount, branchLengthLambda, outputPath);
+            randomTree.rescaleTree(treeDiameter);
+            randomTree.genNewData();
+            randomTree.setOutputPath(outputPath);
+            TreeObject* randomtree = randomTree.getTree();
+
+            treeOutFile << randomtree->getNewick() << std::endl;
+
+            std::string sequenceName = std::to_string(dataCount) + "completeSequence.fasta";
+            std::string tipsName = std::to_string(dataCount) + "tipSequence.fasta";
+
+
+        }
+    }
 }
 #endif

@@ -9,16 +9,13 @@
 
 TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
                                                          moveChoice(-1), rateCount(0), rateAcceptCount(0), rateDelta(0.5), shapeCount(0),
-                                                         shapeAcceptCount(0), shapeDelta(0.5){
+                                                         shapeAcceptCount(0), shapeDelta(0.5), shapePriorRate(1.0), ratePriorRate(1.0), shapePriorShape(1.0), ratePriorShape(1.0){
 
     // first make a new tree based on aln
     trees[0] = new TreeObject(aln);
-    #ifdef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
-    #endif
-    #ifndef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance();
-    #endif
+    RandomVariable& rng = RandomVariable::randomVariableInstance(
+
+    );
 
     // Now go through each node and assign their ancestor branch random gamma parameters shape and rate.
     // except the root as it has no ancestor branch
@@ -26,9 +23,9 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     for(Node* n : nodes) {
         if(n != trees[0]->getRoot()) {
 
-            // alpha and beta both have gamma priors
-            double shape = Probability::Gamma::rv(&rng, 4, 10);
-            double rate = Probability::Gamma::rv(&rng, 4, 10);
+            // shape and rate both have gamma priors
+            double shape = Probability::Gamma::rv(&rng, shapePriorShape, shapePriorRate); 
+            double rate = Probability::Gamma::rv(&rng, ratePriorShape, ratePriorRate); 
             trees[0]->setGammaDist(n, shape, rate);
         }
     }
@@ -42,15 +39,11 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     double lnRate = 0.0;
     std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
     for(std::vector<double> gammaParam: allGammaParams){
-        lnShape += Probability::Gamma::lnPdf(4, 10, gammaParam[0]);
-        lnRate += Probability::Gamma::lnPdf(4, 10, gammaParam[1]);
+        lnShape += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(shapePriorShape, ratePriorRate, gammaParam[1]);
     }
     currentPrior = lnShape + lnRate;
     dirty();
-
-    #ifdef TEST
-    trees[0]->setNodeNameIndex();
-    #endif
 }
 
 TreeParameter::~TreeParameter(){
@@ -85,12 +78,7 @@ void TreeParameter::reject(){
 // This update randomly selects a node and then randomly selects either the shape or rate parameter of its
 // ancestor branch to update.
 double TreeParameter::updateTreeGamma(){
-    #ifdef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance(12);
-    #endif
-    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    #endif
 
     // pick a random node that is not the root to update one of their ancestor branch's gamma parameters
     TreeObject* tree = trees[0];
@@ -122,19 +110,7 @@ double TreeParameter::updateTreeGamma(){
         hastings = std::log(scale);
     }
 
-    // set flags for the changed node, a changed shape or rate means the transition probabilty changes and all nodes
-    // it "descended" from back to the root need to have their conditional likelihood recalculated
-    // due to how Felsenstein's algorithm is calculated (from descendant to ancestor)
     randNode->setNeedsTPUpdate(true);
-    if(!randNode->getIsTip()){
-        randNode->setNeedsCLUpdate(true);
-    }
-        Node* randNodeAnc = randNode->getAncestor();
-    while(randNodeAnc != treeRoot){
-        randNodeAnc->setNeedsCLUpdate(true);
-        randNodeAnc = randNodeAnc->getAncestor();
-    }
-    treeRoot->setNeedsCLUpdate(true);
     tree->initPostOrder();
     this->dirty();
 
@@ -144,27 +120,19 @@ double TreeParameter::updateTreeGamma(){
     double lnRate = 0.0;
     std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
     for(std::vector<double> gammaParam: allGammaParams){
-        lnShape += Probability::Gamma::lnPdf(4, 10, gammaParam[0]);
-        lnRate += Probability::Gamma::lnPdf(4, 10, gammaParam[1]);
+        lnShape += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParam[0]);
+        lnRate += Probability::Gamma::lnPdf(ratePriorShape, ratePriorRate, gammaParam[1]);
     }
     currentPrior = lnShape + lnRate;
-
     return hastings;
 }
 
 // This tree update changes the topology of the tree via NNI (nearest neighbor interchange)
 // NNI implementation:
-// picks a branch containing subtrees s1, s2, s3 and s4 in the configuration ((s1, s2), s3, s4)
-// and randomly transforms the branch into either ((s1, s3), s2, s4) or ((s1, s4), s2, s3). Swapping
-// out an internal subtree with a subtree that diverged earlier
+// pick a node p with the node a as its ancestor. Get p's "cousin" from node a and then swap the subtree with one of p's children
 // Does not change anything related to branch lengths, only how the nodes are arranged
 double TreeParameter::updateTreeMove() {
-    #ifdef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance(12);
-    #endif
-    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    #endif
 
     double hastings;
     TreeObject* tree = trees[0];
@@ -178,113 +146,45 @@ double TreeParameter::updateTreeMove() {
     Node* internalNodeAncestor = nullptr; 
     do{
         internalNode = nodes[(int)(rng.uniformRv() * nodes.size())];
-
+        
         // if a node isn't the root, it will always have an ancestor
         if(internalNode != root){
             internalNodeAncestor = internalNode->getAncestor();
         }
     }
-    while(internalNodeAncestor == nullptr || internalNodeAncestor == root || internalNode == root || internalNode->getIsTip());
+    while(internalNodeAncestor == nullptr || 
+          internalNode == root || 
+          internalNode->getIsTip()
+    );
 
-    // we know that internalNodeAncestor is NOT the root, so we can safely get its ancestor
-    Node* internalNodeAncestorAncestor = internalNodeAncestor->getAncestor();
+    // now we need to pick which of p's subtrees to swap
+    std::set<Node*> iNNeighborSet = internalNode->getNeighbors();
+    iNNeighborSet.erase(internalNodeAncestor);
+    Node* swap1 = Node::chooseNodeFromSet(iNNeighborSet);
 
-    // the descendants of the internalNode are both subtrees s1 and s2
-    std::set<Node*> internalNodeSet = internalNode->getNeighbors();
-    Node* s1 = nullptr;
-    Node* s2 = nullptr;
-    Node* tempnode = nullptr;
+    // the other subtree to swap with is always p's cousin
+    std::set<Node*> iNANeighborSet = internalNodeAncestor->getNeighbors();
+    iNANeighborSet.erase(internalNode);
+    iNANeighborSet.erase(internalNodeAncestor->getAncestor()); // this might not be safe
+    Node* swap2 = Node::chooseNodeFromSet(iNANeighborSet); 
 
-    // keep picking nodes from the internalNode's neighbors (internalNodeSet)
-    // until we populate s1 and s2 with the internalNode's descendants
-    while(1){
-        tempnode = tempnode->chooseNodeFromSet(internalNodeSet);
-        if(tempnode != internalNodeAncestor){
-            if(s1 == nullptr){
-                s1 = tempnode;
-            } 
-            else if(s1 != tempnode && s2 == nullptr){
-                s2 = tempnode;
-                break;
-            }
-        }
-    }
+    // make swap1 a child of internalNodeAncestor by adding the relationship and removing its relationship with internalNode
+    swap1->setAncestor(internalNodeAncestor);
+    internalNodeAncestor->addNeighbor(swap1);
+    swap1->addNeighbor(internalNodeAncestor);
+    swap1->removeNeighbor(internalNode);
+    internalNode->removeNeighbor(swap1);
 
-    // internalNode has a sibling (the other descendant of internalNodeAncestor)
-    // get internalNode's sibling as it is s3
-    Node* internalSiblingNode = nullptr;
-    std::set<Node*> internalNodeAncestorNeighborSet = internalNodeAncestor->getNeighbors();
-    while(1){
-        tempnode = tempnode->chooseNodeFromSet(internalNodeAncestorNeighborSet);
-        if(tempnode != internalNodeAncestorAncestor && tempnode != internalNode){
-            internalSiblingNode = tempnode;
-            break;
-        }
-    }
-    Node *s3 = internalSiblingNode;
+    // make swap2 be a child of p
+    swap2->setAncestor(internalNode);
+    swap2->addNeighbor(internalNode);
+    internalNode->addNeighbor(swap2);
+    internalNodeAncestor->removeNeighbor(swap2);
+    swap2->removeNeighbor(internalNodeAncestor);
 
-    // s4 is the sibling of internalNodeAncestor, so repeat same process again but take
-    // into consideration that internalNodeAncestorAncestor may be the root
-    Node * internalNodeAncestorSibling = nullptr;
-    std::set<Node*> internalNodeAncestorAncestorNeighborSet = internalNodeAncestorAncestor->getNeighbors();
-    while(1){
-        tempnode = tempnode->chooseNodeFromSet(internalNodeAncestorAncestorNeighborSet);
-        if (tempnode != internalNodeAncestorAncestor->getAncestor() && tempnode != internalNodeAncestor ){
-            internalNodeAncestorSibling = tempnode;
-            break;
-        }
-    }
-    Node *s4 = internalNodeAncestorSibling;
-
-    // now that we have our 4 subtrees, we need to do a coin flip to decide which rearrangement
-    // to use. Fundamentally the swaps are the same but its just with different subtrees
-    int coinFlip = rng.uniformRv() < 0.5 ? 0 : 1;
-    Node *swap1 = s2;
-    Node *swap2 = coinFlip ? s3 : s4;
-
-    #ifdef TEST
-        std::cout << "\nswapping " << swap1->getIndex() << " and " << swap2->getIndex() << "\n" << std::flush;
-    #endif
-
-    Node* swap1Ancestor = swap1->getAncestor();
-    Node* swap2Ancestor = swap2->getAncestor();
-    swap1->removeNeighbor(swap1Ancestor);
-    swap1->addNeighbor(swap2Ancestor);
-    swap1->setAncestor(swap2Ancestor);
-    swap2->removeNeighbor(swap2Ancestor);
-    swap2->addNeighbor(swap1Ancestor);
-    swap2->setAncestor(swap1Ancestor);
-
-    // now go to the ancestor's of swap1 and swap2 and make them point to their new children
-    swap1Ancestor->removeNeighbor(swap1);
-    swap1Ancestor->addNeighbor(swap2);
-    swap2Ancestor->removeNeighbor(swap2);
-    swap2Ancestor->addNeighbor(swap1);
-
-    // set some flags for the nodes affected by the changes, basically all nodes of the subtrees that 
-    // got swapped and the flow via ancestors back to the root need to have CL update
-    Node *needsCLupdate = swap1;
-    while(needsCLupdate != root){
-        if(!needsCLupdate->getIsTip()){
-            needsCLupdate->setNeedsCLUpdate(true);
-        }
-        needsCLupdate = needsCLupdate->getAncestor();
-    }
-
-    needsCLupdate = swap2;
-    while(needsCLupdate != root){
-        if(!needsCLupdate->getIsTip()){
-            needsCLupdate->setNeedsCLUpdate(true);
-        }
-        needsCLupdate = needsCLupdate->getAncestor();
-    }
-    root->setNeedsCLUpdate(true);
-
-    // tree flags and hastings time
     tree->initPostOrder();
     this->dirty();
-    hastings = 0; // we are equally likely to go back to where we started intuitively
-
+    hastings = 0.0; // balanced move, so hastings == 0
     return hastings;
 }
 
@@ -317,9 +217,4 @@ void TreeParameter::tune() {
     shapeCount = 0;
 
     std::cout << "rateRate: " << rateRate << " shapeRate: " << shapeRate << "\n";
-}
-
-// A simple "getter" method to get the prior for a tree proposal 
-double TreeParameter::lnPrior() {
-    return currentPrior;
 }

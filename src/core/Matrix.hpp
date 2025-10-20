@@ -107,8 +107,6 @@ void Matrix<T>::print() const {
 				double real = num.real();
 				double imag = num.imag();
 				int realPrecis = (real < 0) ? 2 : 3;
-				// int imagPrecis = (imag < 0) ? 2 : 3;
-				// std::cout << std::fixed << std::setprecision(realPrecis) << real << "+" << std::fixed << std::setprecision(3) << imag << "i ";
 				std::cout << num;
 			}
 			else if (std::is_same_v<T, double>){

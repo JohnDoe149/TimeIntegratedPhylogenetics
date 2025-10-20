@@ -15,12 +15,7 @@
 */
 
 TreeObject::TreeObject(int nt) : numTaxa(nt) {
-    #ifdef TEST
-    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
-    #endif
-    #ifndef TEST
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    #endif
 
     root = addNode();
     root->setName("Root");
@@ -67,16 +62,6 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
     // initialize the down pass sequence
     initPostOrder();
 
-    // Initialize branch lengths
-    for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
-        Node* p = postOrderSeq[i];
-        if (p->getAncestor() != nullptr)
-
-                // FIX LATER
-                // PRIOR SET TO 1, 1
-                this->setGammaDist(p, 1, 1);
-    }
-
     // index the interior nodes (the tip nodes are indexed, above)
     int intIdx = numTaxa;
     for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
@@ -84,6 +69,8 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
         if (p->getIsTip() == false)
             p->setIndex(intIdx++);
     }
+    std::vector<double> zero_vec(numTaxa*2-2, 1.0);
+    branchLengths = zero_vec;
 }
 
 //Generate a random tree and connect it to an alignment
@@ -91,8 +78,9 @@ TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
 
     std::vector<std::string> names = aln->getTaxaNames();
     for(Node* n : postOrderSeq){
-        if(n->getIsTip())
+        if(n->getIsTip()){
             n->setName(names[n->getIndex()]);
+        }
     }
 }
 
@@ -342,7 +330,7 @@ void TreeObject::setNodeNameIndex(){
     // Initialize branch lengths
     for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
         Node* p = postOrderSeq[i];
-        p->setName(std::to_string(p->getIndex()));
+        p->setName("Taxa" + std::to_string(p->getIndex()));
     }
 }
 
@@ -360,6 +348,20 @@ Node* TreeObject::getNodeWithIndex(int index) {
     return nullptr;
 }
 
+void TreeObject::flipAllTPs(){
+    for(Node* n : nodes){
+        n->setNeedsTPUpdate(true);
+    }
+}
+
+void TreeObject::flipAllCLs(){
+    for(Node* n : nodes){
+        if(!n->getIsTip()){
+            n->setNeedsCLUpdate(true);
+        }
+    }
+}
+
 //For outputting a newick string
 void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     if(p == nullptr)
@@ -368,7 +370,8 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     if(!p->getIsTip())
         strm << "(";
     else
-        strm << p->getName() << "[&index=" << p->getIndex() << "]";
+        strm << p->getName(); 
+        // << "[&index=" << p->getIndex() << "]";
 
     std::set<Node*>& pDesc = p->getNeighbors();
     bool foundFirst = false;
@@ -381,20 +384,14 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
         }
     }
 
-    #ifndef TEST
     if(!p->getIsTip())
-        strm << ")[&index=" << p->getIndex() << "]";
-    #endif
-    #ifdef TEST
-    if(!p->getIsTip())
-        strm << ")" << p->getName() <<"[&index=" << p->getIndex() << "]";
-    #endif
+        strm << ")";
+    // if(!p->getIsTip())
+    //     strm << ")" << p->getName() <<"[&index=" << p->getIndex() << "]";
     if(p->getAncestor() != nullptr)
-        strm << ":";
-        // FIX THIS LATER
-        //<< this->getBranchLength(p);
+        strm << ":" << branchLengths[p->getIndex()];
     else
-        strm << ":0.0;";
+        strm << ":0.1;";
 }
 
 

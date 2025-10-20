@@ -4,10 +4,11 @@
 #include "ncl/nxsmultiformat.h"
 #include "Matrix.hpp"
 
+
 class Alignment{
     public:
                                     Alignment(void) = delete;
-                                    Alignment(std::string fn);
+                                    Alignment(std::string fn, int format);
                                     ~Alignment();
         unsigned long long int      getCharCode(int i, int j) {return matrix[i][j];}
         unsigned long long int**    getMatrix() {return matrix;}

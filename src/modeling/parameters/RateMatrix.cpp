@@ -31,8 +31,8 @@ RateMatrix::RateMatrix(Settings settings) :
     // now set the nucleotideTransitionRates and the ratePrior
     ratePrior = 0;
     for(int nucIter = 0; nucIter < nucleotideTransitionRates.size(); nucIter++){
-        nucleotideTransitionRates[nucIter] = Probability::Gamma::rv(&rng, 1, 5);
-        ratePrior += Probability::Gamma::lnPdf(1, 5 ,nucleotideTransitionRates[nucIter]);
+        nucleotideTransitionRates[nucIter] = Probability::Gamma::rv(&rng, 2, 5);
+        ratePrior += Probability::Gamma::lnPdf(2, 5,nucleotideTransitionRates[nucIter]);
     }
 
     oldStationaryPrior = stationaryPrior;
@@ -47,7 +47,7 @@ RateMatrix::RateMatrix() :
                     nucleotideTransitionRates(6.0, 0.0), oldNucleotideTransitionRates(6.0, 0.0){
 
     // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
-    RandomVariable& rng = RandomVariable::randomVariableInstance(100);
+    RandomVariable& rng = RandomVariable::randomVariableInstance(67);
     std::vector<double> alpha(4, 2.0);
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
     oldStationary = currentStationary;
@@ -58,8 +58,8 @@ RateMatrix::RateMatrix() :
     // now set the nucleotideTransitionRates and the ratePrior
     ratePrior = 0;
     for(int nucIter = 0; nucIter < nucleotideTransitionRates.size(); nucIter++){
-        nucleotideTransitionRates[nucIter] = Probability::Gamma::rv(&rng, 1, 5);
-        ratePrior += Probability::Gamma::lnPdf(1, 5 ,nucleotideTransitionRates[nucIter]);
+        nucleotideTransitionRates[nucIter] = Probability::Gamma::rv(&rng, 2, 5);
+        ratePrior += Probability::Gamma::lnPdf(2, 5,nucleotideTransitionRates[nucIter]);
     }
 
     oldStationaryPrior = stationaryPrior;
@@ -124,7 +124,7 @@ double RateMatrix::updateRates(){
     // now recalculate the scale prior
     ratePrior = 0;
     for(int nucIter = 0; nucIter < nucleotideTransitionRates.size(); nucIter++){
-        ratePrior += Probability::Gamma::lnPdf(1, 5, nucleotideTransitionRates[nucIter]);
+        ratePrior += Probability::Gamma::lnPdf(2, 5, nucleotideTransitionRates[nucIter]);
     }
     return log_hastings;
 }
@@ -187,11 +187,12 @@ Matrix<double> RateMatrix::Q() {
         scaler += returnMatrix(i, i) * currentStationary[i];
     }
 
+
     // scale matrix
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
             returnMatrix(i, j) /= -1 * scaler;
-
+    
     return returnMatrix;
 }
 
@@ -219,4 +220,5 @@ void RateMatrix::tune(){
     }
     stationaryAcceptCount = 0;
     stationaryCount = 0;
+    std::cout << "stationaryRate: " << stationaryRate << "\n";
 }

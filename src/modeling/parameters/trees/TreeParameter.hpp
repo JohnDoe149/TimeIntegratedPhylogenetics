@@ -19,7 +19,7 @@ class TreeParameter : public Parameter{
         void accept();
         void reject();
         void tune();
-        double lnPrior();
+        double lnPrior(){return currentPrior;}
 
         std::string writeNewick() {return trees[0]->getNewick();}
 
@@ -35,6 +35,10 @@ class TreeParameter : public Parameter{
         double lambda;
         double currentPrior;
         double oldPrior;
+        double shapePriorRate;
+        double ratePriorRate;
+        double shapePriorShape;
+        double ratePriorShape;
         TreeObject* trees[2];
 };
 

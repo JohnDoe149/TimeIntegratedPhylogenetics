@@ -2,12 +2,17 @@
 #include "Msg.hpp"
 #include "ncl/nxscharactersblock.cpp"
 
-Alignment::Alignment(std::string fn) {
+// the constructor Alignment has been modified to be more flexible in the file types it accepts. When format is 0, use NEXUS_FORMAT
+// when format is 1, use FASTA_DNA_FORMAT
+Alignment::Alignment(std::string fn, int format) {
     
     MultiFormatReader nexusReader;
     const char* fileName = fn.c_str();
-    nexusReader.ReadFilepath(fileName, MultiFormatReader::NEXUS_FORMAT);
 
+    if(format == 0)
+        nexusReader.ReadFilepath(fileName, MultiFormatReader::NEXUS_FORMAT);
+    else if (format == 1)
+        nexusReader.ReadFilepath(fileName, MultiFormatReader::FASTA_DNA_FORMAT);
     size_t numTaxaBlocks = nexusReader.GetNumTaxaBlocks();
     if(numTaxaBlocks > 1)
         Msg::error("Too many taxa blocks (> 1)");

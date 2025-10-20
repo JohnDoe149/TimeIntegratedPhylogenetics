@@ -13,7 +13,6 @@ TransitionProbability::TransitionProbability(const int nn)
 	
 	allocateQ(1);
 	updateQ(Q);
-	accept();
 }
 
 /* Destructor. Deallocates memory used for Q matrix
@@ -22,48 +21,11 @@ TransitionProbability::~TransitionProbability(void) {
 	delete eigens;
 	
 	for(auto i : probs1){
-		delete [] i;
+		delete [] i; 
 	}
 	for(auto i : probs2){
 		delete [] i;
 	}
-}
-
-/* Store the diagonalized matrix via its eigenvalues and eigenvectors. Move the current eigenvalues and eigenvectors to
-   the "old" version to store them in case a backwards move is necessary.
-*/
-void TransitionProbability::accept(void) {
-	isOldComplex = isComplex;
-	if(!isComplex){
-		memcpy(rateEigen[0].oldEigenvalue, rateEigen[0].eigenvalue, numStates*sizeof(double));
-		rateEigen[0].oldDiagLeftMatrix->inject(*rateEigen[0].diagLeftMatrix);
-		rateEigen[0].oldDiagRightMatrix->inject(*rateEigen[0].diagRightMatrix);
-	}
-	else {
-		memcpy(complexRateEigen[0].oldCeigenvalue, complexRateEigen[0].ceigenvalue, numStates*sizeof(std::complex<double>));
-		complexRateEigen[0].oldCDiagLeftMatrix->inject(*complexRateEigen[0].cDiagLeftMatrix);
-		complexRateEigen[0].oldCDiagRightMatrix->inject(*complexRateEigen[0].cDiagRightMatrix);
-	}
-}
-
-/* If the proposed transition probability is rejected, then the previous accepted transiiton probability must be reused.  
-   In other words, copy the eigenvalues and eigenvectors that make up the diagonalized matrix from the "old" or "storage" versions
-   of the variables into the current versions of the variables.
-*/
-void TransitionProbability::reject(void) {	
-	isComplex = isOldComplex;
-
-	if(!isComplex){
-		memcpy(rateEigen[0].eigenvalue, rateEigen[0].oldEigenvalue, numStates*sizeof(double));
-		rateEigen[0].diagLeftMatrix->inject(*rateEigen[0].oldDiagLeftMatrix);
-		rateEigen[0].diagRightMatrix->inject(*rateEigen[0].oldDiagRightMatrix);
-	}
-	else {
-		memcpy(complexRateEigen[0].ceigenvalue, complexRateEigen[0].oldCeigenvalue, numStates*sizeof(std::complex<double>));
-		complexRateEigen[0].cDiagLeftMatrix->inject(*complexRateEigen[0].oldCDiagLeftMatrix);
-		complexRateEigen[0].cDiagRightMatrix->inject(*complexRateEigen[0].oldCDiagRightMatrix);
-	}
-
 }
 
 /* This method calculates the transition probability for the branch that flows into param node. Stores the calculated transition
@@ -75,34 +37,24 @@ void TransitionProbability::setProbs(const int state, const int rate, const int 
 
 	// fetch the matrix based off params, state, rate and node. This matrix will store transition probability
 	Matrix<double> P0 = (*this)(state, rate, node);  
-
+ 
 	// call the method to transform P0
 	tiProbsGamma(alpha, beta, P0);
 }
 
 // Uses formula outlined in Huelsenbeck's "Bayesian Perspective on a Non-parsimonious Parsimony Model" to
-// calculate transition probability matrix ((IdentityMatrix - (1/scale|beta) * rateMatrix)^-(shape|alpha))
+// calculate transition probability matrix ((IdentityMatrix - (1/rate|beta) * rateMatrix)^-(shape|alpha))
 // using the rate matrix, Q, which is stored as a class static variable.
-void TransitionProbability::tiProbsGamma(const double shape, const double scale, Matrix<double>& P0) {
+void TransitionProbability::tiProbsGamma(const double shape, const double rate, Matrix<double>& P0) {
 
 	// first copy the rate matrix so we can transform it
 	Matrix<double> transformMatrix(Q.copy());
 
-	#ifdef TRANSPROB_PRINT
-	std::cout << "starting matrix: \n";
-	transformMatrix.print();
-	#endif
-
-	// next perform a scalar multiplication by 1/scale and then subtract the transformed matrix from the identity matrix (I-A)
-	transformMatrix *= -1/scale;
+	// next perform a scalar multiplication by 1/rate and then subtract the transformed matrix from the identity matrix (I-A)
+	transformMatrix *= -1/rate;
 	for(int i = 0; i < transformMatrix.dim1(); i++){
 		transformMatrix(i,i) = 1 + transformMatrix(i,i);
 	}
-
-	#ifdef TRANSPROB_PRINT
-	std::cout << "matrix predecomposition: \n";
-	transformMatrix.print();
-	#endif
 
 	// get the eigenvalues and eigenvectors via eigens->update. x
 	isComplex = eigens->update(transformMatrix, rateEigen[0], complexRateEigen[0]);
@@ -114,15 +66,6 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 		Matrix<double> *rightMatrix = newDiag.diagRightMatrix;
 		double* eigenvalues = newDiag.eigenvalue;
 
-		#ifdef TRANSPROB_PRINT
-		std::cout << "rightmatrix postdecomposition: \n";
-		rightMatrix->print();
-		std::cout << "left matrix postdecomposition: \n";
-		leftMatrix->print();
-		std::cout << "eigenvalues: \n";
-		std::cout << eigenvalues[0] << " " << eigenvalues[1] << " " << eigenvalues[2] << " " << eigenvalues[3] << "\n" << std::flush;
-		#endif
-
 		// take the eigenvalues to the power of -(shape|alpha) to mimic A^-x = P * D^-x * P^-1 as part of taking the matrix to the
 		// -(shape|alpha) power to get our diagonal matrix
 		Matrix<double> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
@@ -130,34 +73,14 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 			diagonalMatrix(i, i) = eigenvalues[i];
 		}
 
-		#ifdef TRANSPROB_PRINT
-		std::cout << "diagonal matrix \n";
-		diagonalMatrix.print();
-		std::cout << "verify correct diagonalization \n";
-		Matrix<double> verifyMatrix = (((*leftMatrix) * diagonalMatrix)*(*rightMatrix));  
-		verifyMatrix.print();
-		#endif
-
 		// take the diagonal matrix to the -shape power. Here we use the property a^b = e^(b * log(a)) 
 		for(int i = 0; i < Q.dim1(); i++){
-			diagonalMatrix(i, i) = std::exp(-shape * std::log(eigenvalues[i]));
+			diagonalMatrix(i, i) = std::pow(eigenvalues[i], -1 * shape);
 		}
-
-		#ifdef TRANSPROB_PRINT
-		std::cout << "diagonal matrix taken to the power: \n";
-		diagonalMatrix.print();
-		#endif
 
 		// now get transitionProbability matrix by using the property A = P*D*P^-1
 		Matrix<double> newMatrix = ((*leftMatrix) * diagonalMatrix);
 		Matrix<double> finalMatrix = newMatrix * (*rightMatrix);
-
-		#ifdef TRANSPROB_PRINT
-		std::cout << "P * D\n";
-		newMatrix.print();
-		std::cout << "PD * P^-1\n";
-		finalMatrix.print();
-		#endif
 		
 		// copy over the matrix to designated buffer for transition probability matrix
 		for(int i = 0; i < Q.dim1(); i++){
@@ -165,26 +88,11 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 				P0(i,j) = finalMatrix(i, j); 
 			}
 		}
-
-		#ifdef TRANSPROB_PRINT
-		std::cout << "transition probability matrix: \n";
-		P0.print();
-		#endif
 	} else {
 		ComplexRateEigen newDiag = complexRateEigen[0];
 		Matrix<std::complex<double>> *rightMatrix = newDiag.cDiagRightMatrix;
 		Matrix<std::complex<double>> *leftMatrix = newDiag.cDiagLeftMatrix;
 		std::complex<double> *cEigenvalues = newDiag.ceigenvalue;
-
-		#ifdef TRANSPROB_PRINT
-		std::cout << "complex rightmatrix postdecomposition: \n";
-		rightMatrix->print();
-		std::cout << "complex left matrix postdecomposition: \n";
-		leftMatrix->print();		
-		std::cout << "complex eigenvalues: \n";
-		std::cout << cEigenvalues[0].real() << "+" << cEigenvalues[0].imag() << "i " << cEigenvalues[1].real() << "+" << cEigenvalues[1].imag() << "i " 
-				  << cEigenvalues[2].real() << "+" << cEigenvalues[2].imag() << "i " << cEigenvalues[3].real() << "+" << cEigenvalues[3].imag() << "i "<< "\n" << std::flush;
-		#endif
 		
 		// now take the complex numbers to the power of -1/shape
 		Matrix<std::complex<double>> diagonalMatrix(Q.dim1(), Q.dim2(), 0.0);
@@ -200,11 +108,6 @@ void TransitionProbability::tiProbsGamma(const double shape, const double scale,
 				P0(i,j) = newMatrix(i, j).real(); 
 			}
 		}
-
-		#ifndef TRANSPROB_PRINT
-		std::cout << "transition probability matrix: \n";
-		P0.print();
-		#endif
 	} 
 }
 

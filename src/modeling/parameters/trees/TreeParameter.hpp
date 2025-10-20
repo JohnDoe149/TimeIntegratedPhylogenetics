@@ -1,0 +1,45 @@
+#ifndef TREE_PARAMETER_HPP
+#define TREE_PARAMETER_HPP
+#include "modeling/parameters/Parameter.hpp"
+#include "TreeObject.hpp"
+#include <string>
+
+class TreeParameter : public Parameter{
+    public:
+        TreeParameter(void)=delete;
+        TreeParameter(Alignment* aln, std::string newick, double lambda);
+        ~TreeParameter();
+        TreeObject* getTree(){return trees[0];}
+
+        // For making topology changes with NNI
+        double updateTreeMove();
+
+        // for making length changes t
+        double updateTreeGamma();
+        void accept();
+        void reject();
+        void tune();
+        double lnPrior(){return currentPrior;}
+
+        std::string writeNewick() {return trees[0]->getNewick();}
+
+        int shapeCount;
+        int shapeAcceptCount;
+        int rateCount;
+        int rateAcceptCount;
+    private:
+        bool fixedTree;
+        int moveChoice;
+        double shapeDelta;
+        double rateDelta;
+        double lambda;
+        double currentPrior;
+        double oldPrior;
+        double shapePriorRate;
+        double ratePriorRate;
+        double shapePriorShape;
+        double ratePriorShape;
+        TreeObject* trees[2];
+};
+
+#endif

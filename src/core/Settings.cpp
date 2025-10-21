@@ -15,15 +15,13 @@ Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mc
         settings.push_back(arg);
     }
 
+    // set command line arguments here
     settings.push_back("-nexus");
     settings.push_back("/workspaces/JohnPhylo/validation/TIP_testing_data/taxa50diam0.250000siteCount800/0tipSequence.fasta");
-    // settings.push_back("/workspaces/JohnPhylo/res/replicase.nex");
     settings.push_back("-treeOut");
     settings.push_back("/workspaces/JohnPhylo/validation/mixTree.tree");
-    // settings.push_back("/workspaces/JohnPhylo/res/trees.trees");
     settings.push_back("-mcmcOut");
     settings.push_back("/workspaces/JohnPhylo/validation/mixTree.log");
-    // settings.push_back("/workspaces/JohnPhylo/res/analysis.log");
 
     if (settings.size() == 0) {
         usage();

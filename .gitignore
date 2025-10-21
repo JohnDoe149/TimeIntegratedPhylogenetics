@@ -4,3 +4,5 @@
 
 validation/*
 !validation/*.py
+
+.DS_Store

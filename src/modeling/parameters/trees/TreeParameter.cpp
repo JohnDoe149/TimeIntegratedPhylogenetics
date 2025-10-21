@@ -7,18 +7,15 @@
 #include <cmath>
 #include <test.h>
 
-TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lambda(l), currentPrior(0.0), oldPrior(0.0), 
+TreeParameter::TreeParameter(Alignment* aln) : currentPrior(0.0), oldPrior(0.0), 
                                                          moveChoice(-1), rateCount(0), rateAcceptCount(0), rateDelta(0.5), shapeCount(0),
                                                          shapeAcceptCount(0), shapeDelta(0.5), shapePriorRate(1.0), ratePriorRate(1.0), shapePriorShape(1.0), ratePriorShape(1.0){
 
-    // first make a new tree based on aln
+    // first make a new tree based on aligment
     trees[0] = new TreeObject(aln);
-    RandomVariable& rng = RandomVariable::randomVariableInstance(
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
 
-    );
-
-    // Now go through each node and assign their ancestor branch random gamma parameters shape and rate.
-    // except the root as it has no ancestor branch
+    // iterate through each node and assign a branch gamma distribution (shape, rate), excluding the root
     std::vector<Node*> nodes = trees[0]->getPostOrderSeq();
     for(Node* n : nodes) {
         if(n != trees[0]->getRoot()) {
@@ -33,8 +30,7 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     // copy the tree to the tree vector in case we reject
     trees[1] = new TreeObject(*trees[0]);
 
-    // go through each node and calculate the probability of the gamma parameters and add them up 
-    // to use in the posterior calculation
+    // get the prior for all the branch gamma distributions
     double lnShape = 0.0;
     double lnRate = 0.0;
     std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
@@ -46,17 +42,20 @@ TreeParameter::TreeParameter(Alignment* aln, std::string newick, double l) : lam
     dirty();
 }
 
+// delete the store tree objects
 TreeParameter::~TreeParameter(){
     delete trees[0];
     delete trees[1]; 
 }
 
 // This method is in the event the proposed tree gets accepted, copy the accepted tree (tree[0]) to trees[1]
-// for storage. Set currentPrior to oldPrior to store it. Also record what type of treeMove was made for the burn-in
+// for storage. Set currentPrior to oldPrior to store it. Also record what type of treeMove was made for the burn-in.
+// Topology is untunable as its random.
 void TreeParameter::accept(){
-    *trees[1] = *trees[0];
+    *trees[1] = *trees[0]; // copy accepted tree to trees[1] for storage
     oldPrior = currentPrior;
 
+    // update which acceptance occured
     if(moveChoice == 0){
         rateAcceptCount += 1;
     } 
@@ -70,7 +69,7 @@ void TreeParameter::accept(){
 
 // In the event the proposed tree is rejected, copy the tree we stored in trees[1] to use for the next proposal
 void TreeParameter::reject(){
-    *trees[0] = *trees[1];
+    *trees[0] = *trees[1]; // get the previous accepted tree back
     currentPrior = oldPrior;
     moveChoice = -1;
 }
@@ -98,7 +97,9 @@ double TreeParameter::updateTreeGamma(){
         shapeCount += 1;
         moveChoice = 1;
         std::vector<double> gammaParams = tree->getGammaParams(randNode);
-        double scale = std::exp(shapeDelta * (rng.uniformRv() - 0.5));
+        double scale = std::exp(shapeDelta * (rng.uniformRv() - 0.5)); // propose new shape by scaling
+        currentPrior -= Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParams[0]); // before rescaling, remove contribution to the prior of the current shape
+        currentPrior += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParams[0] * scale); // after rescaling, add contribution to the prior of the new shape               
         tree->setGammaDist(randNode, gammaParams[0] * scale, gammaParams[1]);
         hastings = std::log(scale);
     } else{
@@ -106,24 +107,14 @@ double TreeParameter::updateTreeGamma(){
         moveChoice = 0;
         std::vector<double> gammaParams = tree->getGammaParams(randNode);
         double scale = std::exp(rateDelta * (rng.uniformRv() - 0.5));
+        currentPrior -= Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParams[1]); // before rescaling, remove contribution to the prior of the current shape
+        currentPrior += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParams[1] * scale); // after rescaling, add contribution to the prior of the new shape               
         tree->setGammaDist(randNode, gammaParams[0], gammaParams[1] * scale);
         hastings = std::log(scale);
     }
 
-    randNode->setNeedsTPUpdate(true);
-    tree->initPostOrder();
-    this->dirty();
-
-    // go through each node and calculate the probability of the gamma parameters and add them up
-    // to get our prior probability for the posterior calculation
-    double lnShape = 0.0;
-    double lnRate = 0.0;
-    std::vector<std::vector<double>> allGammaParams = trees[0]->getGammas();
-    for(std::vector<double> gammaParam: allGammaParams){
-        lnShape += Probability::Gamma::lnPdf(shapePriorShape, shapePriorRate, gammaParam[0]);
-        lnRate += Probability::Gamma::lnPdf(ratePriorShape, ratePriorRate, gammaParam[1]);
-    }
-    currentPrior = lnShape + lnRate;
+    randNode->setNeedsTPUpdate(true); // branch gamma change requires a TP update
+    this->dirty(); // mark tree as requiring update
     return hastings;
 }
 
@@ -133,8 +124,6 @@ double TreeParameter::updateTreeGamma(){
 // Does not change anything related to branch lengths, only how the nodes are arranged
 double TreeParameter::updateTreeMove() {
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-
-    double hastings;
     TreeObject* tree = trees[0];
     std::vector<Node*> nodes = tree->getPostOrderSeq();
     Node* root = tree->getRoot();
@@ -182,15 +171,15 @@ double TreeParameter::updateTreeMove() {
     internalNodeAncestor->removeNeighbor(swap2);
     swap2->removeNeighbor(internalNodeAncestor);
 
-    tree->initPostOrder();
-    this->dirty();
-    hastings = 0.0; // balanced move, so hastings == 0
+    tree->initPostOrder(); // tree structure has changed, so reinitialize post-order node vector
+    this->dirty(); // mark tree as requiring update for likelihood calculation
+    double hastings = 0.0; // balanced move, so hastings == 0
     return hastings;
 }
 
 // During the burn-in phase of MCMC we seek to tune how the rate and shape parameter proposals are made for all
 // nodes. The classic heurestic of aiming for an acceptance rate of ~0.33 is used. The topology itself can not be
-// tuned, just the branch lengths (rate and shape).
+// tuned, just the branch length param proposals (rate and shape).
 void TreeParameter::tune() {
 
     // Calculate the rate proposals acceptance rate, if its too high, make rateDelta larger to decrease acceptance
@@ -202,8 +191,6 @@ void TreeParameter::tune() {
     else {
         rateDelta /= (2.0 - rateRate/0.33);
     }
-    rateAcceptCount = 0;
-    rateCount = 0;
     
     // Update shapeDelta the same way rateDelta is updated
     double shapeRate = (double)shapeAcceptCount/(double)shapeCount;
@@ -213,6 +200,10 @@ void TreeParameter::tune() {
     else {
         shapeDelta /= (2.0 - shapeRate/0.33);
     }
+
+    // reset counts for the next round of tuning
+    rateAcceptCount = 0;
+    rateCount = 0;
     shapeAcceptCount = 0;
     shapeCount = 0;
 

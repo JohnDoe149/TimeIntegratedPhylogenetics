@@ -24,14 +24,13 @@ class TransitionProbability {
         void                    allocateQ(int size);
 
     private:
-        EigenSystem*            eigens;
-        std::vector<RateEigen>  rateEigen;
-        std::vector<ComplexRateEigen> complexRateEigen;
-        bool                    isComplex;
-        bool                    isOldComplex;
-        int                     numNodes;
-        int                     numStates;
-        Matrix<double>          Q;
+        EigenSystem*            eigens; // eigens used to diagonalize matrices for matrix exponentiation
+        std::vector<RateEigen>  rateEigen; // rateEigen stores a matrix's eigendecomposition for real values
+        std::vector<ComplexRateEigen> complexRateEigen; // complexRateEigen stores a matrix's eigendecomposition for real values
+        bool                    isComplex; // indicates whether the current eigensystem has complex eigenvalues
+        int                     numNodes; // number of nodes in the tree
+        int                     numStates; // number of states in the model (in this case 4, for nucleotides)
+        Matrix<double>          Q; // Q matrix pulled from rate matrix
         std::vector<Matrix<double>*> probs1;
         std::vector<Matrix<double>*> probs2;
         void                    tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix);

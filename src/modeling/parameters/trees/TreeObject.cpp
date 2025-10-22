@@ -14,6 +14,7 @@
 =======================================================================
 */
 
+// Generate a random tree with nt taxa
 TreeObject::TreeObject(int nt) : numTaxa(nt) {
     RandomVariable& rng = RandomVariable::randomVariableInstance();
 
@@ -69,13 +70,15 @@ TreeObject::TreeObject(int nt) : numTaxa(nt) {
         if (p->getIsTip() == false)
             p->setIndex(intIdx++);
     }
-    std::vector<double> zero_vec(numTaxa*2-2, 1.0);
-    branchLengths = zero_vec;
+
+    // set branchLength to 0.1 for clean tree display. Does not effect actual model.
+    branchLengths = std::vector<double>(nodes.size(), 0.1);
 }
 
-//Generate a random tree and connect it to an alignment
+// Generate a random tree and connect it to an alignment, leaf nodes are connected to the alignment via their node index
 TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
 
+    // assign names from alignment to tip nodes
     std::vector<std::string> names = aln->getTaxaNames();
     for(Node* n : postOrderSeq){
         if(n->getIsTip()){
@@ -84,15 +87,17 @@ TreeObject::TreeObject(Alignment* aln) : TreeObject(aln->getNumTaxa()) {
     }
 }
 
+// Copy Constructor
 TreeObject::TreeObject(const TreeObject& t){
     clone(t);
 }
 
+// destructor
 TreeObject::~TreeObject(void) {
     deleteAllNodes();
 }
 
-//Deep Copy Operation
+// Copy Operation 
 TreeObject& TreeObject::operator=(const TreeObject& rhs){
     if(this == &rhs)
         return *this;
@@ -107,14 +112,15 @@ TreeObject& TreeObject::operator=(const TreeObject& rhs){
 =======================================================================
 */
 
+// helper function to help build a tree
 Node* TreeObject::addNode(void) {
-
     Node* newNode = new Node;
     newNode->setOffset((int)nodes.size());
     nodes.push_back(newNode);
     return newNode;
 }
 
+// helper function to clone param TreeObject t
 void TreeObject::clone(const TreeObject& t){
     if(nodes.size() != t.nodes.size()){
         deleteAllNodes();
@@ -122,7 +128,6 @@ void TreeObject::clone(const TreeObject& t){
             addNode();
     }
     this->branchGamma.clear();
-
     this->numTaxa = t.numTaxa;
     this->root = this->nodes[t.root->getOffset()];
 
@@ -132,7 +137,6 @@ void TreeObject::clone(const TreeObject& t){
         p->setIndex(q->getIndex());
         p->setIsTip(q->getIsTip());
         p->setName(q->getName());
-        p->setNeedsCLUpdate(q->getNeedsCLUpdate());
         p->setNeedsTPUpdate(q->getNeedsTPUpdate());
 
         p->removeAllNeighbors();
@@ -157,12 +161,14 @@ void TreeObject::clone(const TreeObject& t){
     }
 }
 
+// deletes all nodes safely and clears the vector
 void TreeObject::deleteAllNodes(){
     for (int i = 0; i < nodes.size(); i++)
         delete nodes[i];
     nodes.clear();
 }
 
+// used to set/update the gamma distribution parameters for a given node
 void TreeObject::setGammaDist(Node* n, double shape, double rate){
     std::vector<double> gammaParams;
     gammaParams.push_back(shape);
@@ -175,7 +181,7 @@ void TreeObject::setGammaDist(Node* n, double shape, double rate){
         it->second = gammaParams;
 }
 
-
+// return the vector of gamma parameters for a given node, returns error if node not found
 std::vector<double> TreeObject::getGammaParams(Node* n) const{
     auto it = branchGamma.find(n);
 
@@ -184,6 +190,7 @@ std::vector<double> TreeObject::getGammaParams(Node* n) const{
     return it->second;
 }
 
+// return all the gamma parameters as a vector of vectors
 std::vector<std::vector<double>> TreeObject::getGammas(){
     std::vector<std::vector<double>> returnVec;
     returnVec.reserve(branchGamma.size());
@@ -196,16 +203,19 @@ std::vector<std::vector<double>> TreeObject::getGammas(){
     return returnVec;
 }
 
+// return the map of node to gamma parameters
 std::map<Node*, std::vector<double>> TreeObject::getGammaMap(){
     return branchGamma;
 }
 
+// return the newick string of the tree via rec helper calls
 std::string TreeObject::getNewick() const{
     std::stringstream strm;
     writeNode(root, strm);
     return strm.str();
 }
 
+// return all the tip nodes as a vector
 std::vector<Node*> TreeObject::getTips() {
     std::vector<Node*> out;
     out.reserve(numTaxa);
@@ -218,49 +228,20 @@ std::vector<Node*> TreeObject::getTips() {
     return out;
 }
 
-int TreeObject::getTaxonIndex(std::string token, std::vector<std::string> taxaNames){
-
-    for(int i = 0, n = taxaNames.size(); i < n; i++){
-        if(taxaNames[i] == token)
-            return i;
-    }
-
-    return -1;
-}
-
+// reinitialize the post-order sequence, useful in case of topology change. Commonly used before getPostOrderSeq
 void TreeObject::initPostOrder(void) {
     postOrderSeq.clear();
     passDown(root, postOrderSeq);
 }
 
-std::vector<std::string> TreeObject::parseNewickString(std::string newick){
-    std::vector<std::string> tokens;
-    std::string str = "";
-    for(int i = 0; i < newick.length(); i++){
-        char c = newick[i];
-        if(c == '(' || c == ')' || c == ',' || c == ':' || c == ';'){
-            if(str != ""){
-                tokens.push_back(str);
-                str = "";
-            }
-
-            tokens.push_back(std::string(1, c));
-        }
-        else {
-            str += std::string(1, c);
-        }
-    }
-
-    return tokens;
-}
-
+// recursive helper method for initPostOrder
 void TreeObject::passDown(Node* p, std::vector<Node*>& vec) {
 
+    // base case
     if(p == nullptr)
         return;
     
     std::set<Node*>& pNeighbors = p->getNeighbors();
-
     for(Node* n : pNeighbors){
         if(n != p->getAncestor())
             passDown(n, vec);
@@ -269,63 +250,16 @@ void TreeObject::passDown(Node* p, std::vector<Node*>& vec) {
     vec.push_back(p);
 }
 
-void TreeObject::print(std::string header) const{
-    std::cout << header << std::endl;
-    print();
-}
-
-void TreeObject::print(void) const{
-
-    showNode(root, 0);
-}
-
-//Output nodes of the tree in a whitespace-indented format
-void TreeObject::showNode(Node* p, int indent) const{
-
-    if(p == nullptr)
-        return;
-
-    for(int i = 0; i < indent; i++)
-        std::cout << " ";
-
-    std::cout << p->getIndex() << " ( ";
-    std::set<Node*>& pNeighbors = p->getNeighbors();
-    for (Node* d : pNeighbors)
-        {
-        if (d == p->getAncestor())
-            std::cout << "a_";
-        std::cout << d->getIndex() << " ";
-        }
-    std::cout << ") ";
-
-    if(p->getAncestor() != nullptr)
-        // FIX THIS LATER
-        //<< this->getBranchLength(p) << " ";
-
-    std::cout << p->getName();
-
-    if (p == root)
-        std::cout << " <- Root";
-    std::cout << std::endl;
-
-    for(Node* n : pNeighbors)
-        {
-        if(n != p->getAncestor())
-            showNode(n, indent+3);
-        }
-}
-
+// sets all nodes as needing transition probability updates
 void TreeObject::updateAll(){
     for(Node* n : nodes){
-        if(n->getIsTip() == false)
-            n->setNeedsCLUpdate(true);
         n->setNeedsTPUpdate(true);
     }
 }
 
 //special helper method for making all node's name their index for easy debugging
 void TreeObject::setNodeNameIndex(){
-    initPostOrder();
+    initPostOrder(); // reinitialize post-order sequence in case of topology change
 
     // Initialize branch lengths
     for (int i=0, n=(int)postOrderSeq.size(); i<n; i++) {
@@ -334,8 +268,8 @@ void TreeObject::setNodeNameIndex(){
     }
 }
 
-/* This method exists to allow a way to quicky get a node via its index. Mainly created to create a traceplot for a given node
-   if the index is negative or greater than the number of nodes, this method returns null*/
+/* This method exists to allow a way to quicky get a node via its index.
+   if the index is negative or greater than the number of nodes, this method returns null */
 Node* TreeObject::getNodeWithIndex(int index) {
     if(index < 0 || index > nodes.size()){
         return nullptr;
@@ -348,21 +282,8 @@ Node* TreeObject::getNodeWithIndex(int index) {
     return nullptr;
 }
 
-void TreeObject::flipAllTPs(){
-    for(Node* n : nodes){
-        n->setNeedsTPUpdate(true);
-    }
-}
 
-void TreeObject::flipAllCLs(){
-    for(Node* n : nodes){
-        if(!n->getIsTip()){
-            n->setNeedsCLUpdate(true);
-        }
-    }
-}
-
-//For outputting a newick string
+//For recursive method for outputting a newick string
 void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
     if(p == nullptr)
         return;
@@ -371,7 +292,6 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
         strm << "(";
     else
         strm << p->getName(); 
-        // << "[&index=" << p->getIndex() << "]";
 
     std::set<Node*>& pDesc = p->getNeighbors();
     bool foundFirst = false;
@@ -386,10 +306,8 @@ void TreeObject::writeNode(Node* p, std::stringstream& strm) const{
 
     if(!p->getIsTip())
         strm << ")";
-    // if(!p->getIsTip())
-    //     strm << ")" << p->getName() <<"[&index=" << p->getIndex() << "]";
     if(p->getAncestor() != nullptr)
-        strm << ":" << branchLengths[p->getIndex()];
+        strm << ":" << branchLengths[p->getIndex()]; 
     else
         strm << ":0.1;";
 }

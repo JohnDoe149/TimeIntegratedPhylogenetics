@@ -2,9 +2,10 @@
 #include "core/Alignment.hpp"
 #include "core/Msg.hpp"
 
+// stores the conditional likelihoods for all nodes in the tree, called by model to initialize and update Cls
 ConditionalLikelihood::ConditionalLikelihood(Alignment* aln, int nN) : numNodes(nN), stateSpace(4) {
     numChar = aln->getNumChar();
-    int width = numNodes*numChar*stateSpace;
+    int width = numNodes*numChar*stateSpace; 
     condLikelihoods = new double[width];
 
     for(int i = 0; i < width; i++){
@@ -33,10 +34,12 @@ ConditionalLikelihood::ConditionalLikelihood(Alignment* aln, int nN) : numNodes(
     }
 }
 
+// destructor
 ConditionalLikelihood::~ConditionalLikelihood(){
     delete [] condLikelihoods;
 }
 
+// returns a pointer to the conditional likelihoods for node n
 double* ConditionalLikelihood::operator()(int n){
     return condLikelihoods + n*numChar*stateSpace;
 }

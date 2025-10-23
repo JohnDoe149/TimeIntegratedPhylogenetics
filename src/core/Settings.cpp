@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+// used to set hyperparameters for model
 Settings::Settings(int argc,  char* argv[]) : nexusInput(""), treeOutput(""), mcmcOutput(""),
                                               numIterations(100000), printFrequency(10), sampleFrequency(10),
                                               burnInIterations(10000), tuneFrequency(100), treeLengthLambda(1.0),

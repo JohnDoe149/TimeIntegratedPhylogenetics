@@ -31,7 +31,7 @@ class TransitionProbability {
         int                     numNodes; // number of nodes in the tree
         int                     numStates; // number of states in the model (in this case 4, for nucleotides)
         Matrix<double>          Q; // Q matrix pulled from rate matrix
-        std::vector<Matrix<double>*> probs1;
+        std::vector<Matrix<double>*> probs1; 
         std::vector<Matrix<double>*> probs2;
         void                    tiProbsGamma(const double shape, const double scale, Matrix<double> &rateMatrix);
         void                    tiProbsComplexEigens(const double v, Matrix<double> &P, ComplexRateEigen& rE);

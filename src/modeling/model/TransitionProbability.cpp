@@ -88,7 +88,7 @@ void TransitionProbability::tiProbsGamma(const double shape, const double rate, 
 				P0(i,j) = finalMatrix(i, j); 
 			}
 		}
-	} else {
+	} else { // there has yet to be a case where complex eigenvalues are needed, but here is the framework to handle them if they arise
 		ComplexRateEigen newDiag = complexRateEigen[0];
 		Matrix<std::complex<double>> *rightMatrix = newDiag.cDiagRightMatrix;
 		Matrix<std::complex<double>> *leftMatrix = newDiag.cDiagLeftMatrix;
@@ -116,6 +116,7 @@ void TransitionProbability::updateQ(Matrix<double> otherQ){
 	Q = otherQ;
 }
 
+// allocate memory for a new set of transition probability matrices and associated eigensystem
 void TransitionProbability::allocateQ(int size){
 
 	rateEigen.push_back(RateEigen(numStates));
@@ -154,6 +155,7 @@ void TransitionProbability::deleteQ(const int index) {
 	probs2.shrink_to_fit();
 }
 
+// delete the most recent transition
 void TransitionProbability::deleteNQ(const int count) {
 	for(int i = 0; i < count; i++){
 		rateEigen.pop_back();

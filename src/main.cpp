@@ -21,6 +21,7 @@
 #ifdef BASE
 int main(int argc, char* argv[]) {
 
+    // command line arguments can be set ahead of time in settings.cpp
     Settings settings(argc, argv);
 
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -29,7 +30,7 @@ int main(int argc, char* argv[]) {
     Alignment aln(settings.nexusInput, 1);
     std::cout << "Initializing model..." << std::endl;
 
-    TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
+    TreeParameter treeParam(&aln);
 
     RateMatrix rateMatrix(settings);
 
@@ -44,42 +45,6 @@ int main(int argc, char* argv[]) {
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << treeParam.writeNewick() << "\n" << std::flush;
-    std::cout << "Analysis was completed in " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << "[m]" << std::endl;
-}
-#endif
-
-#ifdef TEST
-int main(int argc, char* argv[]) {
-
-    RandomTree randomTree(50, 800, 7.7);
-    randomTree.rescaleTree(4.00);
-    randomTree.genNewData();
-    std::vector<std::vector<int>> allSeq = randomTree.getAllNodeSequences();
-    TreeObject* randomtree = randomTree.getTree();
-    std::cout << randomtree->getNewick() << "\n";
-    randomTree.printSequences("testSequence1");
-    randomTree.printTips("test1");
-
-    Settings settings(argc, argv);
-    RateMatrix rateMatrix(settings);
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    RandomVariable& rng = RandomVariable::randomVariableInstance();
-    Alignment aln(randomTree.getTipFilePath(), 1);
-    std::cout << "Initializing model..." << std::endl;
-
-    TreeParameter treeParam(&aln, settings.fixedTree, settings.treeLengthLambda);
-
-    Model model(settings, &aln, &treeParam, &rateMatrix);
-    Mcmc myMCMC(&model, &treeParam, &rateMatrix, settings);
-
-    std::cout << "Starting MCMC..." << std::endl;
-
-    myMCMC.burnin();
-    myMCMC.run();
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cout << treeParam.writeNewick() << "\n" << std::flush;
-    std::cout << randomtree->getNewick() << "\n";
     std::cout << "Analysis was completed in " << std::chrono::duration_cast<std::chrono::minutes>(end - begin).count() << "[m]" << std::endl;
 }
 #endif

@@ -12,20 +12,20 @@ class Settings;
 
 class Model {
     public:
-        Model(void) = delete;
-        Model(Settings s, Alignment* a, TreeParameter* t, RateMatrix* m);
-        ~Model();
+        Model(void) = delete; // remove default constructor
+        Model(Settings s, Alignment* a, TreeParameter* t, RateMatrix* m); // initialize model with alignment, treeParameter and rateMatrix as parameters
+        ~Model(); // destructor
 
-        double lnLikelihood() {return currentLikelihood;}
-        double lnPrior();
+        double lnLikelihood() {return currentLikelihood;} // return lnLikelihood for posterior calculations
+        double lnPrior(); // return lnPrior as the sum of lnPrior from its parameters like Tree and RateMatrix
 
-        void regenerateLikelihood();
+        void regenerateLikelihood(); // regenerate the likelihood to update currentLikelihood
 
-        int getNumTaxa(){return aln->getNumTaxa();}
-        int getNumChar(){return numChar;}
-        int getNumNodes(){return numNodes;}
+        int getNumTaxa(){return aln->getNumTaxa();} // return numTaxa
+        int getNumChar(){return numChar;} // return numChar
+        int getNumNodes(){return numNodes;} // return numNodes
 
-        TransitionProbability* getTransitionProbability() { return transProb; }
+        TransitionProbability* getTransitionProbability() { return transProb; } 
         ConditionalLikelihood* getConditionalLikelihood() { return postOrder; }
 
         void accept();

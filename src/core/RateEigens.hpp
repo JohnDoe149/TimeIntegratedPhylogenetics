@@ -3,6 +3,7 @@
 #include <complex>
 #include <vector>
 
+// stores a matrix's eigendecomposition for real values
 struct RateEigen {
     double* eigenvalue;
     double* oldEigenvalue;
@@ -79,6 +80,7 @@ struct RateEigen {
     }
 };
 
+// stores a matrix's eigendecomposition for complex values
 struct ComplexRateEigen {
     std::complex<double>* ceigenvalue;
     std::complex<double>* oldCeigenvalue;

@@ -17,8 +17,6 @@ RateMatrix::RateMatrix(Settings settings) :
                                    rateAcceptCount(0), rateCount(0), stationaryAcceptCount(0), stationaryCount(0),
                                    nucleotideTransitionRates(6.0, 0.0), oldNucleotideTransitionRates(6.0, 0.0){
 
-
-
     // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
     RandomVariable& rng = RandomVariable::randomVariableInstance(); 
     std::vector<double> alpha(4, 2.0);
@@ -47,7 +45,7 @@ RateMatrix::RateMatrix() :
                     nucleotideTransitionRates(6.0, 0.0), oldNucleotideTransitionRates(6.0, 0.0){
 
     // fill a vector alpha with all ones and generate a random draw of stationaries that sum to 1
-    RandomVariable& rng = RandomVariable::randomVariableInstance(67);
+    RandomVariable& rng = RandomVariable::randomVariableInstance();
     std::vector<double> alpha(4, 2.0);
     Probability::Dirichlet::rv(&rng, alpha, currentStationary);
     oldStationary = currentStationary;
@@ -103,12 +101,12 @@ void RateMatrix::reject() {
     rateOrStationary = 0;
 }
 
-// a simple method that returns the prior of the latest proposed parameters that have not been rejected yet
+// returns the prior of the latest proposed parameters that have not been rejected yet
 double RateMatrix::lnPrior() {
     return stationaryPrior + ratePrior;
 }
 
-// Pick a single nucleotide to nucleotide transition rate within the matrix and propose a rescaling update.
+// pick a single transition rate within the matrix and propose a rescaling update.
 double RateMatrix::updateRates(){
     RandomVariable& rng = RandomVariable::randomVariableInstance();
     rateCount++; // increment update type for tuning
@@ -177,16 +175,17 @@ Matrix<double> RateMatrix::Q() {
         double total = 0.0;
         for(int j = 0; j < 4; j++){
 
-            // if not diagonal, sum up total so we can make the diagonal the additive inverse
+            // if not diagonal, multiply by stationary and add to total
             if(j!=i){
                 returnMatrix(i,j) = currentStationary[j] * returnMatrix(i,j);
                 total += returnMatrix(i , j);
             } 
         }
+
+        // make diagonal elements the additive inverse for the row
         returnMatrix(i, i) = total * -1;
         scaler += returnMatrix(i, i) * currentStationary[i];
     }
-
 
     // scale matrix
     for (int i = 0; i < 4; i++)
@@ -196,6 +195,7 @@ Matrix<double> RateMatrix::Q() {
     return returnMatrix;
 }
 
+// adjust the step-sizes for both rate and stationary updates based on acceptance rates during burn-in
 void RateMatrix::tune(){ 
     double transitionRateRate = (double) rateAcceptCount/rateCount;
     if(transitionRateRate > 0.33){
@@ -204,9 +204,11 @@ void RateMatrix::tune(){
     else {
         rateStepsize /= (2.0 - transitionRateRate/0.33);
     }
+
+    // reset counts to evaluate next round of tuning
     rateAcceptCount = 0;
     rateCount = 0;
-    std::cout << "transitionRate: " << transitionRateRate << "\n";
+    std::cout << "transitionRate: " << transitionRateRate << "\n"; // print out for logging purposes 
 
     // we need to modify the stationaryAlpha
     double stationaryRate = (double) stationaryAcceptCount/stationaryCount;
@@ -218,7 +220,9 @@ void RateMatrix::tune(){
     else {
         stationaryAlpha *= (2.0 + ((stationaryRate-0.33)));
     }
+
+    // reset counts to evaluate next round of tuning
     stationaryAcceptCount = 0;
     stationaryCount = 0;
-    std::cout << "stationaryRate: " << stationaryRate << "\n";
+    std::cout << "stationaryRate: " << stationaryRate << "\n"; // print out for logging purposes 
 }

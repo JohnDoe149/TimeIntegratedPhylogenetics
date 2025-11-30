@@ -12,6 +12,8 @@
 
 Mcmc::Mcmc(Model* m, TreeParameter* t, RateMatrix* rm, Settings& s) : 
     model(m), rateMatrix(rm), tree(t) { 
+
+    // set MCMC parameters from settings
     numIter = s.numIterations;
     numBurnIn = s.burnInIterations;
     printFreq = s.printFrequency;
@@ -19,31 +21,34 @@ Mcmc::Mcmc(Model* m, TreeParameter* t, RateMatrix* rm, Settings& s) :
     sampleFreq = s.sampleFrequency;
     analysisLog = s.mcmcOutput;
     treeLog = s.treeOutput;
- 
+        
+    // set move weights from settings
     branchChoice = s.branchWeight;
     topologyChoice = branchChoice + s.topologyWeight;
     stationaryChoice = topologyChoice + s.stationaryWeight; 
     rateChoice = stationaryChoice + s.rateWeight;
 
+    // initialize MCMC by calculating initial likelihood
     model->regenerateLikelihood();
     model->accept();
 }
 
 void Mcmc::burnin(){
-
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    double currentLnPosterior = model->lnLikelihood() + model->lnPrior();
+    double currentLnPosterior = model->lnLikelihood() + model->lnPrior(); // get the last accepted posterior
+
+    // define a gibbs sampler lambda function to update parameters
     auto gibbsSampler = [this, &rng] (std::function<double()> updater, double currentLnPosterior) {
-        double lnProposalRatio = updater();
-        model->regenerateLikelihood();
+        double lnProposalRatio = updater(); // call updater to propose a new model state, returns the hasting ratio
+        model->regenerateLikelihood(); // recalculate likelihood after proposal
 
-        double modelPrior = model->lnPrior();
-        double modelLikelihood = model->lnLikelihood();
+        double modelPrior = model->lnPrior(); // get the prior after proposal
+        double modelLikelihood = model->lnLikelihood(); // get the new likelihood
+        double newLnPosterior = modelLikelihood + modelPrior; // calculate new posterior
 
-        double newLnPosterior = modelLikelihood + modelPrior;
-        double lnPosteriorRatio = newLnPosterior - currentLnPosterior;
-        double lnR = lnProposalRatio + lnPosteriorRatio;
-        if(std::log(rng.uniformRv()) < lnR){
+        double lnPosteriorRatio = newLnPosterior - currentLnPosterior; // calculate posterior ratio
+        double lnR = lnProposalRatio + lnPosteriorRatio; // apply the hastings ratio
+        if(std::log(rng.uniformRv()) < lnR){ // acceptance check based on a "dice roll"
             model->accept();
             return newLnPosterior;
         }
@@ -53,6 +58,7 @@ void Mcmc::burnin(){
         }
     };
 
+    // begin burn-in iterations
     for(int n = 1; n <= numBurnIn; n++){
         if(n % printFreq == 0){
             std::cout << "Burn-in Iteration " << n << ": " << currentLnPosterior << std::endl;
@@ -61,10 +67,12 @@ void Mcmc::burnin(){
             model->tuneMoves();
         }
 
-        double randomMove = rng.uniformRv() * rateChoice;
+
+        double randomMove = rng.uniformRv() * rateChoice; // randomly pick a move based on weights
         int gibbsUpdates;
         int numNodes = tree->getTree()->getNumNodes();
 
+        // Employ a blocked gibbs sampler, for topology and branch updates
         if (randomMove < topologyChoice){
             std::function<double()> topologyUpdater = [this]() { return tree->updateTreeMove(); };
             std::function<double()> branchUpdater = [this]() { return tree->updateTreeGamma(); };
@@ -95,18 +103,20 @@ void Mcmc::burnin(){
 
 void Mcmc::run(){
     RandomVariable& rng = RandomVariable::randomVariableInstance();
-    double currentLnPosterior = model->lnLikelihood() + model->lnPrior();
+    double currentLnPosterior = model->lnLikelihood() + model->lnPrior(); // get the last accepted posterior
+
+    // define a gibbs sampler lambda function to update parameters
     auto gibbsSampler = [this, &rng] (std::function<double()> updater, double currentLnPosterior) {
-        double lnProposalRatio = updater();
-        model->regenerateLikelihood();
+        double lnProposalRatio = updater(); // call updater to propose a new model state, returns the hasting ratio
+        model->regenerateLikelihood(); // recalculate likelihood after proposal
 
-        double modelPrior = model->lnPrior();
-        double modelLikelihood = model->lnLikelihood();
+        double modelPrior = model->lnPrior(); // get the prior after proposal
+        double modelLikelihood = model->lnLikelihood(); // get the new likelihood
 
-        double newLnPosterior = modelLikelihood + modelPrior;
-        double lnPosteriorRatio = newLnPosterior - currentLnPosterior;
-        double lnR = lnProposalRatio + lnPosteriorRatio;
-        if(std::log(rng.uniformRv()) < lnR){
+        double newLnPosterior = modelLikelihood + modelPrior; // calculate new posterior
+        double lnPosteriorRatio = newLnPosterior - currentLnPosterior; // calculate posterior ratio
+        double lnR = lnProposalRatio + lnPosteriorRatio; // apply the hastings ratio
+        if(std::log(rng.uniformRv()) < lnR){ // acceptance check based on a "dice roll"
             model->accept();
             return newLnPosterior;
         }
@@ -116,6 +126,7 @@ void Mcmc::run(){
         }
     };
 
+    // sort logging output
     std::string tabularHeader = model->tabularHeader();
     std::cout << tabularHeader;
 
@@ -128,6 +139,7 @@ void Mcmc::run(){
     fs << model->treeHeader();
     fs.close();
 
+    // begin sampling iterations
     for(int n = 1; n <= numIter; n++){
         if(n % printFreq == 0){
             std::cout << model->tabularOut(n);
@@ -148,6 +160,7 @@ void Mcmc::run(){
         int gibbsUpdates;
         int numNodes = tree->getTree()->getNumNodes();
 
+        // Employ a blocked gibbs sampler, for topology and branch updates
         if (randomMove < topologyChoice){
             std::function<double()> topologyUpdater = [this]() { return tree->updateTreeMove(); };
             std::function<double()> branchUpdater = [this]() { return tree->updateTreeGamma(); };

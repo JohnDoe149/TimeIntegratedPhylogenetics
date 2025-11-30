@@ -48,6 +48,7 @@ Model::Model(Settings s, Alignment* a, TreeParameter* t, RateMatrix* m) :
     activeT->updateAll();
 }
 
+// destructor
 Model::~Model(){
     delete postOrder;
     delete transProb;
@@ -55,8 +56,9 @@ Model::~Model(){
     delete [] activeTP;
 }
 
+// accept the current model state by prompting each parameter such as tree and rateMatrix accept if they have changed
 void Model::accept() {
-    oldLikelihood = currentLikelihood;
+    oldLikelihood = currentLikelihood; // store accepted oldLikelihood
 
     for(int i = 0; i < numNodes; i++){
         activeTP[i + numNodes] = activeTP[i];
@@ -76,6 +78,7 @@ void Model::accept() {
     transProb->updateQ(rateMatrix->Q());
 }
 
+// restore the previously accepted likelihood and prompt model parameters to reject if they have changed.
 void Model::reject() {
     currentLikelihood = oldLikelihood;
 
@@ -136,12 +139,6 @@ void Model::regenerateLikelihood(){
 
     //std::chrono::steady_clock::time_point probsTime = std::chrono::steady_clock::now();
     //std::cout << "Probs computation was completed in " << std::chrono::duration_cast<std::chrono::milliseconds>(probsTime - rateTime).count() << "[milliseconds]" << std::endl;
-
-    // for(Node* n : poSeq){
-    //     if(n->getNeedsCLUpdate() == true){
-    //         activeCL[n->getIndex()] ^= true; // Flip this ahead of time
-    //     }
-    // }
 
     // CL likelihood calculation, split the alignment into 100 site chunks to parallelize
     tf::Taskflow phyloTaskflow;
@@ -253,12 +250,6 @@ std::string Model::tabularHeader(){
         returnString += "\t" + rateMatrix->transNameOrder()[i];
     }
 
-    // print out each node's shape and rate parameters (really each node's ancestor's branch)
-    // TreeObject *currentTree = tree->getTree();
-    // for(int index = 0; index < currentTree->getNumOfNodes() - 1; index++){
-    //     returnString +=  "\tnode" + std::to_string(index) +"shape\tnode" + std::to_string(index) + "rate"; 
-    // }
-
     return returnString + "\n";
 }
 
@@ -278,20 +269,15 @@ std::string Model::tabularOut(int i){
         returnString += "\t" + std::to_string(rates[i]);
     }
 
-    // For each node, print out their gamma params shape and rate
-    // TreeObject *currentTree = tree->getTree();
-    // for(int index = 0; index < currentTree->getNumOfNodes()-1; index++){
-    //     Node *currentNode = currentTree->getNodeWithIndex(index);
-    //     std::vector<double> gammaParams = currentTree->getGammaParams(currentNode);
-    //     returnString += "\t" + std::to_string(gammaParams[0]) + "\t" + std::to_string(gammaParams[1]);
-    // }
     return returnString + "\n";
 }
 
+// call to get the header for tree output
 std::string Model::treeHeader(){
     return "Iteration\tPosterior\tTree\n";
 }
 
+// call to get the tree output string for the current iteration for .tree
 std::string Model::treeOut(int i){
     return std::to_string(i) + "\t" + std::to_string(lnPrior() + currentLikelihood) + "\t" + tree->writeNewick() + "\n";
 }
